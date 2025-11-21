@@ -1,662 +1,673 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ANK YUKTI — Mental Math Challenge</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANK YUKTI – Mental Math Challenge</title>
 
-   <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #111;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .screen {
-            display: none;
-            padding: 20px;
-        }
-        .active {
-            display: block;
-        }
-        button {
-            padding: 12px 22px;
-            margin: 10px;
-            border-radius: 8px;
-            border: none;
-            font-size: 18px;
-            background: #28a745;
-            color: white;
-        }
-        .box {
-            display: inline-block;
-            margin: 10px;
-            padding: 20px;
-            background: #222;
-            border-radius: 10px;
-            font-size: 22px;
-            width: 90px;
-        }
-        #grid {
-            margin-top: 20px;
-        }
-        #pairArea {
-            margin-top: 30px;
-        }
-        .pairBox {
-            display: inline-block;
-            background: #444;
-            padding: 18px;
-            margin: 10px;
-            font-size: 22px;
-            border-radius: 10px;
-            width: 130px;
-        }
-     /* BOX FIX */
-.numberBox {
-    background: #222;
-    padding: 20px;
-    margin: 10px;
-    border-radius: 10px;
-    display: inline-block;
-    font-size: 24px;
-    width: 90px;
-    text-align: center;
-}
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
 
-.pairBox {
-    background: #444;
-    padding: 20px;
-    margin: 10px;
-    border-radius: 10px;
-    display: inline-block;
-    font-size: 24px;
-    width: 130px;
-    text-align: center;
-}   
-    </style> 
+    .screen {
+      display: none;
+      padding: 20px 15px 40px;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    h1 {
+      margin-top: 10px;
+      margin-bottom: 8px;
+      font-size: 28px;
+      letter-spacing: 2px;
+    }
+
+    h2 {
+      margin: 4px 0 10px;
+    }
+
+    h3 {
+      margin: 8px 0 14px;
+    }
+
+    input {
+      padding: 10px;
+      width: 80%;
+      font-size: 18px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 8px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      background: #28a745;
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #444;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+    }
+
+    #userInfo {
+      font-size: 14px;
+      margin-bottom: 6px;
+      opacity: 0.8;
+    }
+
+    #progressBox {
+      margin-top: 10px;
+      font-size: 14px;
+      background: #222;
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 10px;
+      text-align: left;
+    }
+
+    /* ================= GAME GRID ================= */
+
+    #grid {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .box {
+      background: #222;
+      margin: 6px;
+      border-radius: 10px;
+      font-size: 20px;
+      min-width: 80px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    /* mobile: 2–3 columns */
+    @media (max-width: 600px) {
+      .box {
+        width: 28%;
+      }
+    }
+
+    /* Match hone ke baad DOM se nahi hata,
+       sirf hidden class -> jagah same rahegi (hole) */
+    .box.hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .box.selected {
+      border: 2px solid #ffd54f;
+    }
+
+    .box.wrong {
+      border: 2px solid #ff5252;
+    }
+
+    #statusBar {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    #timer {
+      font-weight: bold;
+    }
+
+    #levelInfo {
+      margin-top: 6px;
+      min-height: 20px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  </style>
 </head>
 
 <body>
+  <!-- ============ LOGIN SCREEN ============ -->
+  <div id="loginScreen" class="screen active">
+    <h1>ANK YUKTI</h1>
+    <h3>Login with Mobile Number</h3>
 
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="screen active">
-        <h1>ANK YUKTI</h1>
-        <h3>Login with Mobile Number</h3>
+    <input id="phoneInput" type="text" placeholder="+91XXXXXXXXXX" /><br /><br />
+    <div id="recaptcha-container"></div>
 
-        <input id="phoneInput" type="text" placeholder="+91XXXXXXXXXX"
-            style="padding: 10px; width: 80%; font-size: 18px;" />
+    <button onclick="sendOTP()">Send OTP</button>
 
-        <br /><br />
-        <div id="recaptcha-container"></div>
+    <div id="otpArea" style="display:none; margin-top:15px;">
+      <input id="otpInput" type="text" placeholder="Enter OTP" /><br />
+      <button onclick="verifyOTP()">Verify OTP</button>
+    </div>
+  </div>
 
-        <button onclick="sendOTP()">Send OTP</button>
+  <!-- ============ MODE SELECTION ============ -->
+  <div id="modeScreen" class="screen">
+    <h1>ANK YUKTI</h1>
+    <div id="userInfo"></div>
+    <h3>Select Mode</h3>
 
-        <div id="otpArea" style="display:none;">
-            <input id="otpInput" type="text" placeholder="Enter OTP"
-                style="padding:10px; width:80%; font-size:18px;" />
-            <br /><br />
-            <button onclick="verifyOTP()">Verify OTP</button>
-        </div>
+    <button onclick="startMode('easy')">Easy</button>
+    <button onclick="startMode('difficult')">Difficult</button>
+    <button onclick="startMode('master')">Master</button>
+    <button onclick="startMode('master_speed')">Master Speed</button>
+
+    <div id="progressBox">
+      <div><b>Your Progress</b></div>
+      <div id="progressLines"></div>
     </div>
 
-    <!-- MODE SELECTION -->
-    <div id="modeScreen" class="screen">
-        <h2>Welcome to ANK YUKTI</h2>
-        <h3>Select Mode</h3>
+    <br />
+    <button class="secondary" onclick="logout()">Logout</button>
+  </div>
 
-        <button onclick="startMode('easy')">Easy</button>
-        <button onclick="startMode('difficult')">Difficult</button>
-        <button onclick="startMode('master')">Master</button>
-        <button onclick="startMode('master_speed')">Master Speed</button>
+  <!-- ============ GAME SCREEN ============ -->
+  <div id="gameScreen" class="screen">
+    <h1 id="modeTitle">Mode</h1>
+    <h3 id="levelTitle">Level</h3>
 
-        <div id="userLabel"></div>
-        <button onclick="showLeaderboard()">Leaderboard</button>
+    <div id="statusBar">
+      Time left: <span id="timer">0</span> s
+      &nbsp; | &nbsp;
+      Score: <span id="score">0</span>
     </div>
 
-    <!-- GAME SCREEN -->
-    <div id="gameScreen" class="screen">
-        <h2 id="levelLabel">Level</h2>
-        <h3 id="timerLabel"></h3>
+    <div id="grid"></div>
+    <div id="levelInfo"></div>
 
-        <div id="grid"></div>
+    <button class="secondary" onclick="backToModes()">Back to Modes</button>
+  </div>
 
-        <div id="pairArea">
-            <div id="targetBox" class="pairBox"></div>
-            <div id="expressionBox" class="pairBox"></div>
-        </div>
+  <!-- ============ FIREBASE + GAME SCRIPT (MODULE) ============ -->
+  <script type="module">
+    // ===== Firebase imports (v12.6.0) =====
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import {
+      getAuth,
+      RecaptchaVerifier,
+      signInWithPhoneNumber,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-        <button onclick="goHome()">Home</button>
-    </div>
-
-    <!-- LEADERBOARD SCREEN -->
-    <div id="leaderboardScreen" class="screen">
-        <h2>Leaderboard</h2>
-        <div id="leaderData"></div>
-        <button onclick="backToHome()">Back</button>
-    </div>
-
-
-
-<!-- =================🔥 FIREBASE (Correct + Final) 🔥================= -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-<script>
-    // Tumhara REAL Firebase Config (fully correct)
+    // ===== Tumhara Firebase config (jo tumne diya) =====
     const firebaseConfig = {
-        apiKey: "AIzaSyDvmE4Qodn5awQzla0TAfcmjShgy1eaNnc",
-        authDomain: "ankyukti.firebaseapp.com",
-        projectId: "ankyukti",
-        storageBucket: "ankyukti.firebasestorage.app",
-        messagingSenderId: "888009326878",
-        appId: "1:888009326878:web:2038a8453c05a99d1f090f"
+      apiKey: "AIzaSyDvmE4Qodn5awQzla0TAfcmjShgy1eaNnc",
+      authDomain: "ankyukti.firebaseapp.com",
+      projectId: "ankyukti",
+      storageBucket: "ankyukti.firebasestorage.app",
+      messagingSenderId: "888009326878",
+      appId: "1:888009326878:web:2038a8453c05a99d1f090f"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-</script>
+    // ================= GLOBAL STATE =================
+    let recaptchaVerifier = null;
+    let confirmationResultGlobal = null;
+    let currentMode = null;
+    let currentLevel = 1;
+    const MAX_LEVEL = 100000;
+    let score = 0;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let selectedBoxes = [];   // {element, value}
+    let remainingPairs = 0;
 
+    // Local progress per mode
+    const PROGRESS_KEY = "ank_yukti_progress_v3";
+    let progress = loadProgress();
 
-<!-- ================= GAME + OTP + LEVEL LOGIC START ================= -->
-<script>
-
-let currentUser = null;
-let currentMode = null;
-let currentLevel = 1;
-let timer = null;
-
-
-/* ================ OTP LOGIN =================== */
-
-function sendOTP() {
-    let phone = document.getElementById("phoneInput").value;
-
-    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container");
-
-    auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
-        .then((confirmationResult) => {
-            window.confirmationResult = confirmationResult;
-            document.getElementById("otpArea").style.display = "block";
-            alert("OTP Sent!");
-        })
-        .catch((e) => alert(e.message));
-}
-
-function verifyOTP() {
-    let code = document.getElementById("otpInput").value;
-
-    window.confirmationResult.confirm(code)
-        .then((res) => {
-            currentUser = res.user;
-
-            document.getElementById("loginScreen").classList.remove("active");
-            document.getElementById("modeScreen").classList.add("active");
-
-            document.getElementById("userLabel").innerHTML =
-                "Logged in as: " + currentUser.phoneNumber;
-
-        })
-        .catch((e) => alert("Wrong OTP"));
-}
- /* ================ LOCAL PROGRESS (per mode) =================== */
-
-const LOCAL_KEY = "ank_yukti_progress_v1";
-
-function loadLocalProgress() {
-    try {
-        const raw = localStorage.getItem(LOCAL_KEY);
-        if (!raw) {
-            return {
-                easy: 0,
-                difficult: 0,
-                master: 0,
-                master_speed: 0
-            };
-        }
-        const p = JSON.parse(raw);
-        ["easy","difficult","master","master_speed"].forEach(m => {
-            if (typeof p[m] !== "number") p[m] = 0;
-        });
-        return p;
-    } catch (e) {
-        return {
-            easy: 0,
-            difficult: 0,
-            master: 0,
-            master_speed: 0
-        };
-    }
-}
-
-function saveLocalProgress() {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(progress));
-}
-
-/* ================ GLOBAL STATE =================== */
-
-let progress = loadLocalProgress();
-let gridData = [];
-let selectedFirst = null;
-let remainingPairs = 0;
-let timeLeft = 0;
-let timeLimit = 0;
-let timerInterval = null;
-
-/* ================ MODE CONFIG =================== */
-
-const MODES = {
-    easy: {
+    const MODE_CONFIG = {
+      easy: {
         name: "Easy",
         gridSize: 16,
-        baseTime: 90,
-        minTime: 25,
         maxValue: 60,
-        ops: ["+", "-"]
-    },
-    difficult: {
+        ops: ["+", "-"],
+        baseTime: 90,
+        minTime: 25
+      },
+      difficult: {
         name: "Difficult",
         gridSize: 25,
-        baseTime: 60,
-        minTime: 18,
         maxValue: 120,
-        ops: ["+", "-", "*"]
-    },
-    master: {
+        ops: ["+", "-", "*"],
+        baseTime: 60,
+        minTime: 18
+      },
+      master: {
         name: "Master",
         gridSize: 36,
-        baseTime: 45,
-        minTime: 10,
         maxValue: 200,
-        ops: ["+", "-", "*", "/"]
-    },
-    master_speed: {
+        ops: ["+", "-", "*", "/"],
+        baseTime: 45,
+        minTime: 10
+      },
+      master_speed: {
         name: "Master Speed",
         gridSize: 36,
+        maxValue: 99,            // tumhari condition: digits chhote (100 se niche)
+        ops: ["+", "-", "*", "/"],
         baseTime: 30,
-        minTime: 5,
-        maxValue: 99,
-        ops: ["+", "-", "*", "/"]
-    }
-};
+        minTime: 5
+      }
+    };
 
-/* ================ TIMER HELPERS =================== */
-
-function calcTimeLimit(mode, level) {
-    const cfg = MODES[mode];
-    const maxLevel = 100000;
-    const ratio = Math.min(1, (level - 1) / maxLevel);
-    let t = cfg.baseTime - ratio * (cfg.baseTime - cfg.minTime);
-
-    if (level % 5 === 0) t -= 4;
-    if (level % 10 === 0) t -= 2;
-    if (mode === "master_speed") {
-        t -= Math.floor(level / 25);
-    }
-
-    if (t < cfg.minTime) t = cfg.minTime;
-    return Math.round(t);
-}
-
-function startTimer() {
-    clearTimer();
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft <= 0) {
-            timeLeft = 0;
-            updateTimerLabel();
-            clearTimer();
-            alert("Time over! Level failed.");
-            // same level repeat
-            startLevel(currentMode, currentLevel);
-        } else {
-            updateTimerLabel();
+    // ========== Recaptcha init ==========
+    function initRecaptcha() {
+      recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "normal",
+          callback: () => {
+            console.log("reCAPTCHA solved");
+          }
         }
-    }, 1000);
-}
+      );
+      recaptchaVerifier.render();
+      window.recaptchaVerifier = recaptchaVerifier;
+    }
 
-function clearTimer() {
-    if (timerInterval) {
+    window.addEventListener("load", () => {
+      initRecaptcha();
+      updateProgressUI();
+    });
+
+    // ========== Helper: show screen ==========
+    function showScreen(id) {
+      document.querySelectorAll(".screen")
+        .forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    // ========== OTP LOGIN FUNCTIONS ==========
+    function sendOTPImpl() {
+      const phone = document.getElementById("phoneInput").value.trim();
+      if (!phone) {
+        alert("Phone number format: +91XXXXXXXXXX");
+        return;
+      }
+      if (!recaptchaVerifier) {
+        alert("reCAPTCHA not ready, reload page");
+        return;
+      }
+
+      signInWithPhoneNumber(auth, phone, recaptchaVerifier)
+        .then((confirmationResult) => {
+          confirmationResultGlobal = confirmationResult;
+          document.getElementById("otpArea").style.display = "block";
+          alert("OTP sent (ya test code use karo yadi testing hai)");
+        })
+        .catch((e) => {
+          console.error(e);
+          alert(e.message);
+        });
+    }
+
+    function verifyOTPImpl() {
+      const code = document.getElementById("otpInput").value.trim();
+      if (!confirmationResultGlobal) {
+        alert("Please request OTP again.");
+        return;
+      }
+      confirmationResultGlobal.confirm(code)
+        .then((result) => {
+          const user = result.user;
+          document.getElementById("userInfo").textContent =
+            "Logged in as: " + (user.phoneNumber || "Player");
+
+          showScreen("modeScreen");
+          updateProgressUI();
+        })
+        .catch((e) => {
+          console.error(e);
+          alert("Wrong OTP. Please try again.");
+        });
+    }
+
+    function logoutImpl() {
+      signOut(auth).finally(() => {
+        showScreen("loginScreen");
+      });
+    }
+
+    // ========== LOCAL PROGRESS ==========
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(PROGRESS_KEY);
+        if (!raw) {
+          return { easy: 0, difficult: 0, master: 0, master_speed: 0 };
+        }
+        const p = JSON.parse(raw);
+        ["easy", "difficult", "master", "master_speed"].forEach(k => {
+          if (typeof p[k] !== "number") p[k] = 0;
+        });
+        return p;
+      } catch {
+        return { easy: 0, difficult: 0, master: 0, master_speed: 0 };
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+      updateProgressUI();
+    }
+
+    function updateProgressUI() {
+      const div = document.getElementById("progressLines");
+      if (!div) return;
+      div.innerHTML =
+        "Easy: Level " + (progress.easy || 0) + "<br>" +
+        "Difficult: Level " + (progress.difficult || 0) + "<br>" +
+        "Master: Level " + (progress.master || 0) + "<br>" +
+        "Master Speed: Level " + (progress.master_speed || 0);
+    }
+
+    // ========== MODE / LEVEL FLOW ==========
+    function startModeImpl(modeKey) {
+      currentMode = modeKey;
+      const cfg = MODE_CONFIG[currentMode];
+
+      const best = progress[currentMode] || 0;
+      currentLevel = best + 1;  // continue from next level
+
+      score = 0;
+      document.getElementById("score").textContent = score;
+
+      document.getElementById("modeTitle").textContent = cfg.name;
+      showScreen("gameScreen");
+
+      startLevel();
+    }
+
+    function calcTimeLimit(modeKey, level) {
+      const cfg = MODE_CONFIG[modeKey];
+      const maxL = MAX_LEVEL;
+      const ratio = Math.min(1, (level - 1) / maxL);
+      let t = cfg.baseTime - ratio * (cfg.baseTime - cfg.minTime);
+
+      // tumhari condition: har 5th / 10th thoda extra tight
+      if (level % 5 === 0) t -= 4;
+      if (level % 10 === 0) t -= 2;
+
+      if (modeKey === "master_speed") {
+        t -= Math.floor(level / 25);   // speed mode me dheere-dheere aur kam
+      }
+
+      if (t < cfg.minTime) t = cfg.minTime;
+      return Math.round(t);
+    }
+
+    function startLevel() {
+      const cfg = MODE_CONFIG[currentMode];
+
+      document.getElementById("levelTitle").textContent =
+        cfg.name + " · Level " + currentLevel + " / " + MAX_LEVEL;
+
+      buildGridForLevel(currentMode, currentLevel);
+      const t = calcTimeLimit(currentMode, currentLevel);
+      startTimer(t);
+      document.getElementById("levelInfo").textContent = "";
+    }
+
+    function startTimer(seconds) {
+      clearTimer();
+      timeLeft = seconds;
+      document.getElementById("timer").textContent = timeLeft;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft < 0) timeLeft = 0;
+        document.getElementById("timer").textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          clearTimer();
+          document.getElementById("levelInfo").textContent =
+            "Time over! Same level restart ho raha hai.";
+          setTimeout(() => {
+            startLevel();
+          }, 1200);
+        }
+      }, 1000);
+    }
+
+    function clearTimer() {
+      if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
+      }
     }
-}
 
-function updateTimerLabel() {
-    const label = document.getElementById("timerLabel");
-    label.innerHTML = "Time left: " + timeLeft + " s";
-}
+    // ========== GRID / BOX GENERATION ==========
 
-/* ================ GRID & MATCH LOGIC =================== */
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
-function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function makeExpression(value, ops, maxValue) {
-    for (let attempt = 0; attempt < 15; attempt++) {
+    // simple expression generator
+    function makeExpression(value, ops, maxValue) {
+      for (let attempt = 0; attempt < 15; attempt++) {
         const op = ops[randomInt(0, ops.length - 1)];
         let a, b;
         if (op === "+") {
-            a = randomInt(1, value - 1);
-            b = value - a;
-            if (a > 0 && b > 0 && a <= maxValue && b <= maxValue) {
-                return a + " + " + b;
-            }
+          a = randomInt(1, value - 1);
+          b = value - a;
+          if (a > 0 && b > 0 && a <= maxValue && b <= maxValue) {
+            return a + " + " + b;
+          }
         } else if (op === "-") {
-            a = randomInt(value, value + maxValue);
-            b = a - value;
-            if (a <= maxValue && b >= 0) {
-                return a + " - " + b;
-            }
+          a = randomInt(value, value + maxValue);
+          b = a - value;
+          if (a <= maxValue && b >= 0) {
+            return a + " - " + b;
+          }
         } else if (op === "*") {
-            if (value === 0) continue;
-            const factors = [];
-            for (let i = 1; i <= Math.sqrt(value); i++) {
-                if (value % i === 0) {
-                    if (i <= maxValue && (value / i) <= maxValue) {
-                        factors.push([i, value / i]);
-                    }
-                }
+          if (value === 0) continue;
+          const factors = [];
+          for (let i = 1; i <= Math.sqrt(value); i++) {
+            if (value % i === 0) {
+              if (i <= maxValue && value / i <= maxValue) {
+                factors.push([i, value / i]);
+              }
             }
-            if (factors.length) {
-                const f = factors[randomInt(0, factors.length - 1)];
-                return f[0] + " × " + f[1];
-            }
+          }
+          if (factors.length) {
+            const f = factors[randomInt(0, factors.length - 1)];
+            return f[0] + " × " + f[1];
+          }
         } else if (op === "/") {
-            if (value === 0) continue;
-            const d = randomInt(1, Math.min(12, value));
-            const n = value * d;
-            if (n <= maxValue) {
-                return n + " ÷ " + d;
-            }
+          if (value === 0) continue;
+          const d = randomInt(1, Math.min(12, value));
+          const n = value * d;
+          if (n <= maxValue) {
+            return n + " ÷ " + d;
+          }
         }
-    }
-    return String(value);
-}
-
-function generateLevelGrid(mode, level) {
-    const cfg = MODES[mode];
-    const size = cfg.gridSize;
-    const pairCount = Math.floor(size / 2);
-
-    const values = [];
-    while (values.length < pairCount) {
-        const v = randomInt(3, cfg.maxValue);
-        if (!values.includes(v)) values.push(v);
+      }
+      return String(value);
     }
 
-    const cells = [];
-    let id = 0;
+    function buildGridForLevel(modeKey, level) {
+      const cfg = MODE_CONFIG[modeKey];
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+      selectedBoxes = [];
 
-    values.forEach((v) => {
-        const forms = [];
-        forms.push(String(v));
-        forms.push(makeExpression(v, cfg.ops, cfg.maxValue));
+      const size = cfg.gridSize;
+      const pairCount = Math.floor(size / 2);
 
-        // kabhi kabhi extra forms jisse 4,6 jaisi multiple expressions ban sake
-        if (Math.random() < 0.3) {
-            forms.push(makeExpression(v, cfg.ops, cfg.maxValue));
+      const tiles = [];
+
+      // pairs banate hain – kuch sirf number-result, kuch expression+number
+      for (let i = 0; i < pairCount; i++) {
+        const value = randomInt(4, cfg.maxValue);
+        const useExpression = Math.random() < 0.7;
+
+        let t1Text, t2Text;
+
+        if (useExpression) {
+          t1Text = makeExpression(value, cfg.ops, cfg.maxValue);
+          t2Text = String(value);
+        } else {
+          t1Text = String(value);
+          t2Text = String(value);
         }
-        if (forms.length % 2 !== 0) {
-            forms.pop();
+
+        // pair 1
+        tiles.push({ text: t1Text, value });
+        tiles.push({ text: t2Text, value });
+
+        // kabhi-kabhi same value ka ek extra pair (taaki 3-4 tiles same result ho sakte)
+        if (Math.random() < 0.25 && tiles.length + 2 <= size) {
+          const extraExpr = makeExpression(value, cfg.ops, cfg.maxValue);
+          tiles.push({ text: extraExpr, value });
+          tiles.push({ text: String(value), value });
         }
 
-        forms.forEach((txt) => {
-            cells.push({
-                id: id++,
-                text: txt,
-                value: v,
-                removed: false
-            });
-        });
-    });
+        if (tiles.length >= size) break;
+      }
 
-    // Agar cells zyada ban gaye to cut
-    while (cells.length > size) cells.pop();
+      // agar kam ho gaye to random fill
+      while (tiles.length < size) {
+        const v = randomInt(4, cfg.maxValue);
+        tiles.push({ text: String(v), value: v });
+      }
 
-    // Shuffle
-    for (let i = cells.length - 1; i > 0; i--) {
+      // shuffle
+      for (let i = tiles.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        const temp = cells[i];
-        cells[i] = cells[j];
-        cells[j] = temp;
-    }
+        [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+      }
 
-    return cells;
-}
+      remainingPairs = Math.floor(tiles.length / 2);
 
-function renderGrid() {
-    const gridDiv = document.getElementById("grid");
-    gridDiv.innerHTML = "";
-
-    gridData.forEach((cell, index) => {
+      tiles.forEach((tile, index) => {
         const div = document.createElement("div");
         div.className = "box";
-        div.dataset.index = index;
+        div.textContent = tile.text;
+        div.dataset.value = tile.value;
+        div.dataset.index = index.toString();
 
-        if (cell.removed) {
-            div.style.visibility = "hidden";
-        } else {
-            div.textContent = cell.text;
-        }
+        div.addEventListener("click", () => onBoxClick(div));
 
-        div.onclick = () => handleBoxClick(index);
-
-        gridDiv.appendChild(div);
-    });
-
-    if (selectedFirst == null) {
-        document.getElementById("targetBox").innerHTML = "First box";
-        document.getElementById("expressionBox").innerHTML = "Second box";
+        grid.appendChild(div);
+      });
     }
-}
 
-function handleBoxClick(index) {
-    const cell = gridData[index];
-    if (cell.removed) return;
+    // ========== MATCHING LOGIC ==========
+    function onBoxClick(boxEl) {
+      if (boxEl.classList.contains("hidden")) return;
 
-    const tBox = document.getElementById("targetBox");
-    const eBox = document.getElementById("expressionBox");
+      // same pe dubara click -> deselect
+      if (boxEl.classList.contains("selected")) {
+        boxEl.classList.remove("selected");
+        selectedBoxes = selectedBoxes.filter(b => b.element !== boxEl);
+        return;
+      }
 
-    if (selectedFirst == null) {
-        selectedFirst = index;
-        tBox.innerHTML = cell.text + "<br/>(" + cell.value + ")";
-        eBox.innerHTML = "Match this value";
-    } else {
-        if (index === selectedFirst) {
-            // same box dubara: reset
-            selectedFirst = null;
-            tBox.innerHTML = "First box";
-            eBox.innerHTML = "Second box";
-            return;
-        }
+      if (selectedBoxes.length === 2) return;
 
-        const firstCell = gridData[selectedFirst];
-        const secondCell = cell;
+      boxEl.classList.add("selected");
+      selectedBoxes.push({
+        element: boxEl,
+        value: parseInt(boxEl.dataset.value, 10)
+      });
 
-        eBox.innerHTML = cell.text + "<br/>(" + cell.value + ")";
-
-        if (firstCell.value === secondCell.value) {
-            // ✅ MATCH — SAME RESULT WALE SAB MATCH HO SAKTE
-            gridData[selectedFirst].removed = true;
-            gridData[index].removed = true;
-            remainingPairs--;
-
-            setTimeout(() => {
-                selectedFirst = null;
-                renderGrid();
-
-                if (remainingPairs === 0) {
-                    levelCompleted();
-                }
-            }, 250);
-        } else {
-            // ❌ GALAT MATCH
-            setTimeout(() => {
-                alert("Galat match! Dono reset ho gaye.");
-                selectedFirst = null;
-                tBox.innerHTML = "First box";
-                eBox.innerHTML = "Second box";
-            }, 150);
-        }
+      if (selectedBoxes.length === 2) {
+        checkMatch();
+      }
     }
-}
 
-/* ================ LEVEL FLOW =================== */
+    function checkMatch() {
+      const [b1, b2] = selectedBoxes;
+      const v1 = b1.value;
+      const v2 = b2.value;
 
-function startMode(modeKey) {
-    currentMode = modeKey;
+      if (v1 === v2) {
+        // ✅ correct – koi bhi same result wale match ho sakte
+        b1.element.classList.remove("selected");
+        b2.element.classList.remove("selected");
+        b1.element.classList.add("hidden");
+        b2.element.classList.add("hidden");
 
-    // jis mode me jitna progress hai, uska next level
-    const best = progress[modeKey] || 0;
-    currentLevel = best + 1;
+        score += 10;
+        remainingPairs--;
+        document.getElementById("score").textContent = score;
 
-    showGameScreen();
-    startLevel(currentMode, currentLevel);
-}
+        if (remainingPairs <= 0) {
+          clearTimer();
+          levelCompleted();
+        }
+      } else {
+        // ❌ galat – dono reset
+        b1.element.classList.add("wrong");
+        b2.element.classList.add("wrong");
+        setTimeout(() => {
+          b1.element.classList.remove("selected", "wrong");
+          b2.element.classList.remove("selected", "wrong");
+        }, 350);
+      }
 
-function startLevel(modeKey, level) {
-    clearTimer();
-    selectedFirst = null;
-    gridData = generateLevelGrid(modeKey, level);
-    remainingPairs = Math.floor(gridData.length / 2);
+      selectedBoxes = [];
+    }
 
-    const cfg = MODES[modeKey];
-    timeLimit = calcTimeLimit(modeKey, level);
-    timeLeft = timeLimit;
+    function levelCompleted() {
+      const msgEl = document.getElementById("levelInfo");
+      msgEl.textContent = "Level " + currentLevel + " complete!";
 
-    document.getElementById("levelLabel").innerHTML =
-        MODES[modeKey].name + " · Level " + level + " / 100000";
-
-    updateTimerLabel();
-    renderGrid();
-    startTimer();
-}
-
-function levelCompleted() {
-    clearTimer();
-
-    // progress update
-    if (currentLevel > (progress[currentMode] || 0)) {
+      // progress update
+      if (!progress[currentMode] || currentLevel > progress[currentMode]) {
         progress[currentMode] = currentLevel;
-        saveLocalProgress();
+        saveProgress();
+      }
+
+      // Choice: next level ya repeat – confirm box se simple rakhte hain
+      setTimeout(() => {
+        const goNext = confirm(
+          "Level " + currentLevel + " complete!\nOK = Next Level\nCancel = Repeat same level"
+        );
+        if (goNext) {
+          currentLevel++;
+        }
+        startLevel();
+      }, 800);
     }
 
-    alert("Level " + currentLevel + " complete!");
-
-    // Leaderboard + cloud save
-    saveProgressToCloud();
-
-    // next level
-    currentLevel++;
-    startLevel(currentMode, currentLevel);
-}
-
-/* ================ CLOUD SAVE / LEADERBOARD =================== */
-
-function saveProgressToCloud() {
-    if (!currentUser) return;
-
-    const bestEasy       = progress.easy        || 0;
-    const bestDiff       = progress.difficult   || 0;
-    const bestMaster     = progress.master      || 0;
-    const bestMasterSpd  = progress.master_speed|| 0;
-
-    const bestOverall = Math.max(
-        bestEasy, bestDiff, bestMaster, bestMasterSpd
-    );
-
-    const uid = currentUser.uid;
-
-    db.collection("users").doc(uid).set({
-        phone: currentUser.phoneNumber || null,
-        best: {
-            easy: bestEasy,
-            difficult: bestDiff,
-            master: bestMaster,
-            master_speed: bestMasterSpd
-        },
-        bestOverall: bestOverall,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    // leaderboard collection
-    db.collection("leaderboard").doc(uid).set({
-        phone: currentUser.phoneNumber || null,
-        bestOverall: bestOverall,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-}
-
-function showLeaderboard() {
-    showScreen("leaderboardScreen");
-    const box = document.getElementById("leaderData");
-    box.innerHTML = "Loading...";
-
-    db.collection("leaderboard")
-        .orderBy("bestOverall", "desc")
-        .limit(20)
-        .get()
-        .then((snap) => {
-            if (snap.empty) {
-                box.innerHTML = "No players yet.";
-                return;
-            }
-            let html = "<ol style='text-align:left;'>";
-            snap.forEach((doc) => {
-                const d = doc.data();
-                const name = d.phone || "Player";
-                const lvl = d.bestOverall || 0;
-                html += "<li>" + name + " — Level " + lvl + "</li>";
-            });
-            html += "</ol>";
-            box.innerHTML = html;
-        })
-        .catch((e) => {
-            box.innerHTML = "Error loading leaderboard.";
-        });
-}
-
-/* ================ SCREEN HELPERS =================== */
-
-function showScreen(id) {
-    const screens = document.getElementsByClassName("screen");
-    for (let i = 0; i < screens.length; i++) {
-        screens[i].classList.remove("active");
+    function backToModesImpl() {
+      clearTimer();
+      showScreen("modeScreen");
     }
-    document.getElementById(id).classList.add("active");
-}
 
-function showGameScreen() {
-    showScreen("gameScreen");
-}
-
-function goHome() {
-    clearTimer();
-    showScreen("modeScreen");
-}
-
-function backToHome() {
-    showScreen("modeScreen");
-}
-
-/* ================ AUTH STATE LISTENER =================== */
-
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        currentUser = user;
-        document.getElementById("userLabel").innerHTML =
-            "Logged in as: " + (user.phoneNumber || "Player");
-    }
-});
-
-</script>
-
+    // ====== window pe expose (HTML onclick ke liye) ======
+    window.sendOTP = sendOTPImpl;
+    window.verifyOTP = verifyOTPImpl;
+    window.logout = logoutImpl;
+    window.startMode = startModeImpl;
+    window.backToModes = backToModesImpl;
+  </script>
 </body>
-</html> 
+</html>
