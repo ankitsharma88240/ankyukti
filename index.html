@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ANK YUKTI — Mental Math Challenge</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .screen {
+            display: none;
+            padding: 20px;
+        }
+        .active {
+            display: block;
+        }
+        button {
+            padding: 12px 22px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 18px;
+            background: #28a745;
+            color: white;
+        }
+        .box {
+            display: inline-block;
+            margin: 10px;
+            padding: 20px;
+            background: #222;
+            border-radius: 10px;
+            font-size: 22px;
+            width: 90px;
+        }
+        #grid {
+            margin-top: 20px;
+        }
+        #pairArea {
+            margin-top: 30px;
+        }
+        .pairBox {
+            display: inline-block;
+            background: #444;
+            padding: 18px;
+            margin: 10px;
+            font-size: 22px;
+            border-radius: 10px;
+            width: 130px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="screen active">
+        <h1>ANK YUKTI</h1>
+        <h3>Login with Mobile Number</h3>
+
+        <input id="phoneInput" type="text" placeholder="+91XXXXXXXXXX"
+            style="padding: 10px; width: 80%; font-size: 18px;" />
+
+        <br /><br />
+        <div id="recaptcha-container"></div>
+
+        <button onclick="sendOTP()">Send OTP</button>
+
+        <div id="otpArea" style="display:none;">
+            <input id="otpInput" type="text" placeholder="Enter OTP"
+                style="padding:10px; width:80%; font-size:18px;" />
+            <br /><br />
+            <button onclick="verifyOTP()">Verify OTP</button>
+        </div>
+    </div>
+
+    <!-- MODE SELECTION -->
+    <div id="modeScreen" class="screen">
+        <h2>Welcome to ANK YUKTI</h2>
+        <h3>Select Mode</h3>
+
+        <button onclick="startMode('easy')">Easy</button>
+        <button onclick="startMode('difficult')">Difficult</button>
+        <button onclick="startMode('master')">Master</button>
+        <button onclick="startMode('master_speed')">Master Speed</button>
+
+        <div id="userLabel"></div>
+        <button onclick="showLeaderboard()">Leaderboard</button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="gameScreen" class="screen">
+        <h2 id="levelLabel">Level</h2>
+        <h3 id="timerLabel"></h3>
+
+        <div id="grid"></div>
+
+        <div id="pairArea">
+            <div id="targetBox" class="pairBox"></div>
+            <div id="expressionBox" class="pairBox"></div>
+        </div>
+
+        <button onclick="goHome()">Home</button>
+    </div>
+
+    <!-- LEADERBOARD SCREEN -->
+    <div id="leaderboardScreen" class="screen">
+        <h2>Leaderboard</h2>
+        <div id="leaderData"></div>
+        <button onclick="backToHome()">Back</button>
+    </div>
+
+
+
+<!-- =================🔥 FIREBASE (Correct + Final) 🔥================= -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+    // Tumhara REAL Firebase Config (fully correct)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDvmE4Qodn5awQzla0TAfcmjShgy1eaNnc",
+        authDomain: "ankyukti.firebaseapp.com",
+        projectId: "ankyukti",
+        storageBucket: "ankyukti.firebasestorage.app",
+        messagingSenderId: "888009326878",
+        appId: "1:888009326878:web:2038a8453c05a99d1f090f"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+</script>
+
+
+<!-- ================= GAME + OTP + LEVEL LOGIC START ================= -->
+<script>
+
+let currentUser = null;
+let currentMode = null;
+let currentLevel = 1;
+let timer = null;
+
+
+/* ================ OTP LOGIN =================== */
+
+function sendOTP() {
+    let phone = document.getElementById("phoneInput").value;
+
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container");
+
+    auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+        .then((confirmationResult) => {
+            window.confirmationResult = confirmationResult;
+            document.getElementById("otpArea").style.display = "block";
+            alert("OTP Sent!");
+        })
+        .catch((e) => alert(e.message));
+}
+
+function verifyOTP() {
+    let code = document.getElementById("otpInput").value;
+
+    window.confirmationResult.confirm(code)
+        .then((res) => {
+            currentUser = res.user;
+
+            document.getElementById("loginScreen").classList.remove("active");
+            document.getElementById("modeScreen").classList.add("active");
+
+            document.getElementById("userLabel").innerHTML =
+                "Logged in as: " + currentUser.phoneNumber;
+
+        })
+        .catch((e) => alert("Wrong OTP"));
+}
+ /* ================ LOCAL PROGRESS (per mode) =================== */
+
+const LOCAL_KEY = "ank_yukti_progress_v1";
+
+function loadLocalProgress() {
+    try {
+        const raw = localStorage.getItem(LOCAL_KEY);
+        if (!raw) {
+            return {
+                easy: 0,
+                difficult: 0,
+                master: 0,
+                master_speed: 0
+            };
+        }
+        const p = JSON.parse(raw);
+        ["easy","difficult","master","master_speed"].forEach(m => {
+            if (typeof p[m] !== "number") p[m] = 0;
+        });
+        return p;
+    } catch (e) {
+        return {
+            easy: 0,
+            difficult: 0,
+            master: 0,
+            master_speed: 0
+        };
+    }
+}
+
+function saveLocalProgress() {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(progress));
+}
+
+/* ================ GLOBAL STATE =================== */
+
+let progress = loadLocalProgress();
+let gridData = [];
+let selectedFirst = null;
+let remainingPairs = 0;
+let timeLeft = 0;
+let timeLimit = 0;
+let timerInterval = null;
+
+/* ================ MODE CONFIG =================== */
+
+const MODES = {
+    easy: {
+        name: "Easy",
+        gridSize: 16,
+        baseTime: 90,
+        minTime: 25,
+        maxValue: 60,
+        ops: ["+", "-"]
+    },
+    difficult: {
+        name: "Difficult",
+        gridSize: 25,
+        baseTime: 60,
+        minTime: 18,
+        maxValue: 120,
+        ops: ["+", "-", "*"]
+    },
+    master: {
+        name: "Master",
+        gridSize: 36,
+        baseTime: 45,
+        minTime: 10,
+        maxValue: 200,
+        ops: ["+", "-", "*", "/"]
+    },
+    master_speed: {
+        name: "Master Speed",
+        gridSize: 36,
+        baseTime: 30,
+        minTime: 5,
+        maxValue: 99,
+        ops: ["+", "-", "*", "/"]
+    }
+};
+
+/* ================ TIMER HELPERS =================== */
+
+function calcTimeLimit(mode, level) {
+    const cfg = MODES[mode];
+    const maxLevel = 100000;
+    const ratio = Math.min(1, (level - 1) / maxLevel);
+    let t = cfg.baseTime - ratio * (cfg.baseTime - cfg.minTime);
+
+    if (level % 5 === 0) t -= 4;
+    if (level % 10 === 0) t -= 2;
+    if (mode === "master_speed") {
+        t -= Math.floor(level / 25);
+    }
+
+    if (t < cfg.minTime) t = cfg.minTime;
+    return Math.round(t);
+}
+
+function startTimer() {
+    clearTimer();
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            timeLeft = 0;
+            updateTimerLabel();
+            clearTimer();
+            alert("Time over! Level failed.");
+            // same level repeat
+            startLevel(currentMode, currentLevel);
+        } else {
+            updateTimerLabel();
+        }
+    }, 1000);
+}
+
+function clearTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimerLabel() {
+    const label = document.getElementById("timerLabel");
+    label.innerHTML = "Time left: " + timeLeft + " s";
+}
+
+/* ================ GRID & MATCH LOGIC =================== */
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function makeExpression(value, ops, maxValue) {
+    for (let attempt = 0; attempt < 15; attempt++) {
+        const op = ops[randomInt(0, ops.length - 1)];
+        let a, b;
+        if (op === "+") {
+            a = randomInt(1, value - 1);
+            b = value - a;
+            if (a > 0 && b > 0 && a <= maxValue && b <= maxValue) {
+                return a + " + " + b;
+            }
+        } else if (op === "-") {
+            a = randomInt(value, value + maxValue);
+            b = a - value;
+            if (a <= maxValue && b >= 0) {
+                return a + " - " + b;
+            }
+        } else if (op === "*") {
+            if (value === 0) continue;
+            const factors = [];
+            for (let i = 1; i <= Math.sqrt(value); i++) {
+                if (value % i === 0) {
+                    if (i <= maxValue && (value / i) <= maxValue) {
+                        factors.push([i, value / i]);
+                    }
+                }
+            }
+            if (factors.length) {
+                const f = factors[randomInt(0, factors.length - 1)];
+                return f[0] + " × " + f[1];
+            }
+        } else if (op === "/") {
+            if (value === 0) continue;
+            const d = randomInt(1, Math.min(12, value));
+            const n = value * d;
+            if (n <= maxValue) {
+                return n + " ÷ " + d;
+            }
+        }
+    }
+    return String(value);
+}
+
+function generateLevelGrid(mode, level) {
+    const cfg = MODES[mode];
+    const size = cfg.gridSize;
+    const pairCount = Math.floor(size / 2);
+
+    const values = [];
+    while (values.length < pairCount) {
+        const v = randomInt(3, cfg.maxValue);
+        if (!values.includes(v)) values.push(v);
+    }
+
+    const cells = [];
+    let id = 0;
+
+    values.forEach((v) => {
+        const forms = [];
+        forms.push(String(v));
+        forms.push(makeExpression(v, cfg.ops, cfg.maxValue));
+
+        // kabhi kabhi extra forms jisse 4,6 jaisi multiple expressions ban sake
+        if (Math.random() < 0.3) {
+            forms.push(makeExpression(v, cfg.ops, cfg.maxValue));
+        }
+        if (forms.length % 2 !== 0) {
+            forms.pop();
+        }
+
+        forms.forEach((txt) => {
+            cells.push({
+                id: id++,
+                text: txt,
+                value: v,
+                removed: false
+            });
+        });
+    });
+
+    // Agar cells zyada ban gaye to cut
+    while (cells.length > size) cells.pop();
+
+    // Shuffle
+    for (let i = cells.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = cells[i];
+        cells[i] = cells[j];
+        cells[j] = temp;
+    }
+
+    return cells;
+}
+
+function renderGrid() {
+    const gridDiv = document.getElementById("grid");
+    gridDiv.innerHTML = "";
+
+    gridData.forEach((cell, index) => {
+        const div = document.createElement("div");
+        div.className = "box";
+        div.dataset.index = index;
+
+        if (cell.removed) {
+            div.style.visibility = "hidden";
+        } else {
+            div.textContent = cell.text;
+        }
+
+        div.onclick = () => handleBoxClick(index);
+
+        gridDiv.appendChild(div);
+    });
+
+    if (selectedFirst == null) {
+        document.getElementById("targetBox").innerHTML = "First box";
+        document.getElementById("expressionBox").innerHTML = "Second box";
+    }
+}
+
+function handleBoxClick(index) {
+    const cell = gridData[index];
+    if (cell.removed) return;
+
+    const tBox = document.getElementById("targetBox");
+    const eBox = document.getElementById("expressionBox");
+
+    if (selectedFirst == null) {
+        selectedFirst = index;
+        tBox.innerHTML = cell.text + "<br/>(" + cell.value + ")";
+        eBox.innerHTML = "Match this value";
+    } else {
+        if (index === selectedFirst) {
+            // same box dubara: reset
+            selectedFirst = null;
+            tBox.innerHTML = "First box";
+            eBox.innerHTML = "Second box";
+            return;
+        }
+
+        const firstCell = gridData[selectedFirst];
+        const secondCell = cell;
+
+        eBox.innerHTML = cell.text + "<br/>(" + cell.value + ")";
+
+        if (firstCell.value === secondCell.value) {
+            // ✅ MATCH — SAME RESULT WALE SAB MATCH HO SAKTE
+            gridData[selectedFirst].removed = true;
+            gridData[index].removed = true;
+            remainingPairs--;
+
+            setTimeout(() => {
+                selectedFirst = null;
+                renderGrid();
+
+                if (remainingPairs === 0) {
+                    levelCompleted();
+                }
+            }, 250);
+        } else {
+            // ❌ GALAT MATCH
+            setTimeout(() => {
+                alert("Galat match! Dono reset ho gaye.");
+                selectedFirst = null;
+                tBox.innerHTML = "First box";
+                eBox.innerHTML = "Second box";
+            }, 150);
+        }
+    }
+}
+
+/* ================ LEVEL FLOW =================== */
+
+function startMode(modeKey) {
+    currentMode = modeKey;
+
+    // jis mode me jitna progress hai, uska next level
+    const best = progress[modeKey] || 0;
+    currentLevel = best + 1;
+
+    showGameScreen();
+    startLevel(currentMode, currentLevel);
+}
+
+function startLevel(modeKey, level) {
+    clearTimer();
+    selectedFirst = null;
+    gridData = generateLevelGrid(modeKey, level);
+    remainingPairs = Math.floor(gridData.length / 2);
+
+    const cfg = MODES[modeKey];
+    timeLimit = calcTimeLimit(modeKey, level);
+    timeLeft = timeLimit;
+
+    document.getElementById("levelLabel").innerHTML =
+        MODES[modeKey].name + " · Level " + level + " / 100000";
+
+    updateTimerLabel();
+    renderGrid();
+    startTimer();
+}
+
+function levelCompleted() {
+    clearTimer();
+
+    // progress update
+    if (currentLevel > (progress[currentMode] || 0)) {
+        progress[currentMode] = currentLevel;
+        saveLocalProgress();
+    }
+
+    alert("Level " + currentLevel + " complete!");
+
+    // Leaderboard + cloud save
+    saveProgressToCloud();
+
+    // next level
+    currentLevel++;
+    startLevel(currentMode, currentLevel);
+}
+
+/* ================ CLOUD SAVE / LEADERBOARD =================== */
+
+function saveProgressToCloud() {
+    if (!currentUser) return;
+
+    const bestEasy       = progress.easy        || 0;
+    const bestDiff       = progress.difficult   || 0;
+    const bestMaster     = progress.master      || 0;
+    const bestMasterSpd  = progress.master_speed|| 0;
+
+    const bestOverall = Math.max(
+        bestEasy, bestDiff, bestMaster, bestMasterSpd
+    );
+
+    const uid = currentUser.uid;
+
+    db.collection("users").doc(uid).set({
+        phone: currentUser.phoneNumber || null,
+        best: {
+            easy: bestEasy,
+            difficult: bestDiff,
+            master: bestMaster,
+            master_speed: bestMasterSpd
+        },
+        bestOverall: bestOverall,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // leaderboard collection
+    db.collection("leaderboard").doc(uid).set({
+        phone: currentUser.phoneNumber || null,
+        bestOverall: bestOverall,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+}
+
+function showLeaderboard() {
+    showScreen("leaderboardScreen");
+    const box = document.getElementById("leaderData");
+    box.innerHTML = "Loading...";
+
+    db.collection("leaderboard")
+        .orderBy("bestOverall", "desc")
+        .limit(20)
+        .get()
+        .then((snap) => {
+            if (snap.empty) {
+                box.innerHTML = "No players yet.";
+                return;
+            }
+            let html = "<ol style='text-align:left;'>";
+            snap.forEach((doc) => {
+                const d = doc.data();
+                const name = d.phone || "Player";
+                const lvl = d.bestOverall || 0;
+                html += "<li>" + name + " — Level " + lvl + "</li>";
+            });
+            html += "</ol>";
+            box.innerHTML = html;
+        })
+        .catch((e) => {
+            box.innerHTML = "Error loading leaderboard.";
+        });
+}
+
+/* ================ SCREEN HELPERS =================== */
+
+function showScreen(id) {
+    const screens = document.getElementsByClassName("screen");
+    for (let i = 0; i < screens.length; i++) {
+        screens[i].classList.remove("active");
+    }
+    document.getElementById(id).classList.add("active");
+}
+
+function showGameScreen() {
+    showScreen("gameScreen");
+}
+
+function goHome() {
+    clearTimer();
+    showScreen("modeScreen");
+}
+
+function backToHome() {
+    showScreen("modeScreen");
+}
+
+/* ================ AUTH STATE LISTENER =================== */
+
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        document.getElementById("userLabel").innerHTML =
+            "Logged in as: " + (user.phoneNumber || "Player");
+    }
+});
+
+</script>
+
+</body>
+</html> 
