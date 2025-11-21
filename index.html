@@ -86,37 +86,30 @@
 
     #grid {
       margin-top: 18px;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;                 /* FLEX hata diya, ab GRID */
+      gap: 6px;
       justify-content: center;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 360px;              /* mobile width ke hisaab se */
     }
 
     .box {
       background: #222;
-      margin: 6px;
       border-radius: 10px;
       font-size: 20px;
-      min-width: 80px;
-      min-height: 56px;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 4px;
       box-sizing: border-box;
       text-align: center;
+      aspect-ratio: 1 / 1;           /* SQUARE box */
+      width: 100%;
     }
 
-    /* mobile: 2–3 columns */
-    @media (max-width: 600px) {
-      .box {
-        width: 28%;
-      }
-    }
-
-    /* Match hone ke baad DOM se nahi hata,
-       sirf hidden class -> jagah same rahegi (hole) */
     .box.hidden {
-      visibility: hidden;
+      visibility: hidden;           /* jagah wahi, sirf khali square */
       pointer-events: none;
     }
 
@@ -142,6 +135,15 @@
       min-height: 20px;
       font-size: 14px;
       opacity: 0.9;
+    }
+
+    @media (min-width: 768px) {
+      #grid {
+        max-width: 480px;
+      }
+      .box {
+        font-size: 22px;
+      }
     }
   </style>
 </head>
@@ -211,7 +213,7 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-    // ===== Tumhara Firebase config (jo tumne diya) =====
+    // ===== Tumhara Firebase config =====
     const firebaseConfig = {
       apiKey: "AIzaSyDvmE4Qodn5awQzla0TAfcmjShgy1eaNnc",
       authDomain: "ankyukti.firebaseapp.com",
@@ -221,7 +223,6 @@
       appId: "1:888009326878:web:2038a8453c05a99d1f090f"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
@@ -237,7 +238,6 @@
     let selectedBoxes = [];   // {element, value}
     let remainingPairs = 0;
 
-    // Local progress per mode
     const PROGRESS_KEY = "ank_yukti_progress_v3";
     let progress = loadProgress();
 
@@ -269,7 +269,7 @@
       master_speed: {
         name: "Master Speed",
         gridSize: 36,
-        maxValue: 99,            // tumhari condition: digits chhote (100 se niche)
+        maxValue: 99,
         ops: ["+", "-", "*", "/"],
         baseTime: 30,
         minTime: 5
@@ -393,7 +393,7 @@
       const cfg = MODE_CONFIG[currentMode];
 
       const best = progress[currentMode] || 0;
-      currentLevel = best + 1;  // continue from next level
+      currentLevel = best + 1;
 
       score = 0;
       document.getElementById("score").textContent = score;
@@ -410,12 +410,11 @@
       const ratio = Math.min(1, (level - 1) / maxL);
       let t = cfg.baseTime - ratio * (cfg.baseTime - cfg.minTime);
 
-      // tumhari condition: har 5th / 10th thoda extra tight
       if (level % 5 === 0) t -= 4;
       if (level % 10 === 0) t -= 2;
 
       if (modeKey === "master_speed") {
-        t -= Math.floor(level / 25);   // speed mode me dheere-dheere aur kam
+        t -= Math.floor(level / 25);
       }
 
       if (t < cfg.minTime) t = cfg.minTime;
@@ -468,7 +467,6 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // simple expression generator
     function makeExpression(value, ops, maxValue) {
       for (let attempt = 0; attempt < 15; attempt++) {
         const op = ops[randomInt(0, ops.length - 1)];
@@ -520,9 +518,12 @@
       const size = cfg.gridSize;
       const pairCount = Math.floor(size / 2);
 
+      // *** yahan columns set kar rahe hain ***
+      const cols = Math.round(Math.sqrt(size));  // 16→4, 25→5, 36→6
+      grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
       const tiles = [];
 
-      // pairs banate hain – kuch sirf number-result, kuch expression+number
       for (let i = 0; i < pairCount; i++) {
         const value = randomInt(4, cfg.maxValue);
         const useExpression = Math.random() < 0.7;
@@ -537,11 +538,9 @@
           t2Text = String(value);
         }
 
-        // pair 1
         tiles.push({ text: t1Text, value });
         tiles.push({ text: t2Text, value });
 
-        // kabhi-kabhi same value ka ek extra pair (taaki 3-4 tiles same result ho sakte)
         if (Math.random() < 0.25 && tiles.length + 2 <= size) {
           const extraExpr = makeExpression(value, cfg.ops, cfg.maxValue);
           tiles.push({ text: extraExpr, value });
@@ -551,13 +550,11 @@
         if (tiles.length >= size) break;
       }
 
-      // agar kam ho gaye to random fill
       while (tiles.length < size) {
         const v = randomInt(4, cfg.maxValue);
         tiles.push({ text: String(v), value: v });
       }
 
-      // shuffle
       for (let i = tiles.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
@@ -582,7 +579,6 @@
     function onBoxClick(boxEl) {
       if (boxEl.classList.contains("hidden")) return;
 
-      // same pe dubara click -> deselect
       if (boxEl.classList.contains("selected")) {
         boxEl.classList.remove("selected");
         selectedBoxes = selectedBoxes.filter(b => b.element !== boxEl);
@@ -608,7 +604,6 @@
       const v2 = b2.value;
 
       if (v1 === v2) {
-        // ✅ correct – koi bhi same result wale match ho sakte
         b1.element.classList.remove("selected");
         b2.element.classList.remove("selected");
         b1.element.classList.add("hidden");
@@ -623,7 +618,6 @@
           levelCompleted();
         }
       } else {
-        // ❌ galat – dono reset
         b1.element.classList.add("wrong");
         b2.element.classList.add("wrong");
         setTimeout(() => {
@@ -639,13 +633,11 @@
       const msgEl = document.getElementById("levelInfo");
       msgEl.textContent = "Level " + currentLevel + " complete!";
 
-      // progress update
       if (!progress[currentMode] || currentLevel > progress[currentMode]) {
         progress[currentMode] = currentLevel;
         saveProgress();
       }
 
-      // Choice: next level ya repeat – confirm box se simple rakhte hain
       setTimeout(() => {
         const goNext = confirm(
           "Level " + currentLevel + " complete!\nOK = Next Level\nCancel = Repeat same level"
@@ -662,7 +654,7 @@
       showScreen("modeScreen");
     }
 
-    // ====== window pe expose (HTML onclick ke liye) ======
+    // ====== window pe expose ======
     window.sendOTP = sendOTPImpl;
     window.verifyOTP = verifyOTPImpl;
     window.logout = logoutImpl;
