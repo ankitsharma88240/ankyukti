@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ANK YUKTI – Mental Math Challenge</title>
-
   <style>
     body {
       margin: 0;
@@ -17,7 +16,7 @@
 
     .screen {
       display: none;
-      padding: 20px 15px 40px;
+      padding: 20px;
     }
 
     .screen.active {
@@ -25,186 +24,164 @@
     }
 
     h1 {
-      margin-top: 10px;
-      margin-bottom: 8px;
-      font-size: 28px;
-      letter-spacing: 2px;
+      margin-top: 20px;
+      font-size: 32px;
     }
 
     h2 {
-      margin: 4px 0 10px;
-    }
-
-    h3 {
-      margin: 8px 0 14px;
+      margin-top: 10px;
+      font-size: 22px;
     }
 
     input {
       padding: 10px;
-      width: 80%;
       font-size: 18px;
+      width: 80%;
+      max-width: 320px;
+      margin: 8px 0;
       border-radius: 6px;
       border: none;
-      margin-top: 5px;
     }
 
     button {
-      padding: 10px 20px;
-      margin: 8px;
+      padding: 12px 22px;
+      margin: 10px;
       border-radius: 8px;
       border: none;
-      font-size: 16px;
+      font-size: 18px;
       background: #28a745;
-      color: #fff;
-    }
-
-    button.secondary {
-      background: #444;
+      color: white;
+      cursor: pointer;
     }
 
     button:disabled {
       opacity: 0.5;
+      cursor: not-allowed;
     }
-
-    #userInfo {
-      font-size: 14px;
-      margin-bottom: 6px;
-      opacity: 0.8;
-    }
-
-    #progressBox {
-      margin-top: 10px;
-      font-size: 14px;
-      background: #222;
-      display: inline-block;
-      padding: 8px 14px;
-      border-radius: 10px;
-      text-align: left;
-    }
-
-    /* ================= GAME GRID ================= */
 
     #grid {
-      margin-top: 18px;
-      display: grid;                 /* FLEX hata diya, ab GRID */
-      gap: 6px;
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 360px;              /* mobile width ke hisaab se */
+      gap: 10px;
     }
 
     .box {
+      display: inline-block;
+      width: 90px;
+      height: 60px;
       background: #222;
       border-radius: 10px;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      box-sizing: border-box;
+      font-size: 22px;
+      line-height: 60px;
       text-align: center;
-      aspect-ratio: 1 / 1;           /* SQUARE box */
-      width: 100%;
-    }
-
-    .box.hidden {
-      visibility: hidden;           /* jagah wahi, sirf khali square */
-      pointer-events: none;
+      cursor: pointer;
+      user-select: none;
     }
 
     .box.selected {
-      border: 2px solid #ffd54f;
+      background: #3a7bd5;
     }
 
-    .box.wrong {
-      border: 2px solid #ff5252;
+    .box.cleared {
+      visibility: hidden;    /* box gayab, lekin jagah wahi rehti hai */
+      cursor: default;
     }
 
-    #statusBar {
-      margin-top: 8px;
-      font-size: 14px;
+    #topBar {
+      margin-top: 10px;
+      font-size: 18px;
     }
 
-    #timer {
-      font-weight: bold;
+    #topBar span {
+      margin: 0 6px;
     }
 
-    #levelInfo {
+    #recaptcha-container {
+      margin: 10px auto;
+      display: inline-block;
+    }
+
+    .small-note {
+      font-size: 13px;
+      color: #ccc;
       margin-top: 6px;
-      min-height: 20px;
-      font-size: 14px;
-      opacity: 0.9;
     }
 
-    @media (min-width: 768px) {
-      #grid {
-        max-width: 480px;
-      }
-      .box {
-        font-size: 22px;
-      }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #777;
     }
   </style>
 </head>
-
 <body>
-  <!-- ============ LOGIN SCREEN ============ -->
+  <!-- LOGIN SCREEN -->
   <div id="loginScreen" class="screen active">
     <h1>ANK YUKTI</h1>
-    <h3>Login with Mobile Number</h3>
+    <h2>Login with Mobile Number</h2>
 
-    <input id="phoneInput" type="text" placeholder="+91XXXXXXXXXX" /><br /><br />
-    <div id="recaptcha-container"></div>
+    <input
+      id="phoneInput"
+      type="text"
+      placeholder="Enter mobile (e.g. 88240xxxxx)"
+    /><br />
 
-    <button onclick="sendOTP()">Send OTP</button>
+    <div id="recaptcha-container"></div><br />
 
-    <div id="otpArea" style="display:none; margin-top:15px;">
-      <input id="otpInput" type="text" placeholder="Enter OTP" /><br />
-      <button onclick="verifyOTP()">Verify OTP</button>
+    <button id="sendOtpBtn">Send OTP</button>
+
+    <div id="otpArea" style="display:none; margin-top:10px;">
+      <input
+        id="otpInput"
+        type="text"
+        placeholder="Enter OTP"
+      /><br />
+      <button id="verifyOtpBtn">Verify OTP</button>
+    </div>
+
+    <div class="small-note">
+      Daily free SMS limit Firebase test mode ke hisaab se hoti hai.
     </div>
   </div>
 
-  <!-- ============ MODE SELECTION ============ -->
+  <!-- MODE SCREEN (abhi single mode: Master Speed) -->
   <div id="modeScreen" class="screen">
     <h1>ANK YUKTI</h1>
-    <div id="userInfo"></div>
-    <h3>Select Mode</h3>
-
-    <button onclick="startMode('easy')">Easy</button>
-    <button onclick="startMode('difficult')">Difficult</button>
-    <button onclick="startMode('master')">Master</button>
-    <button onclick="startMode('master_speed')">Master Speed</button>
-
-    <div id="progressBox">
-      <div><b>Your Progress</b></div>
-      <div id="progressLines"></div>
+    <h2>Select Mode</h2>
+    <button id="startMasterBtn">Start Master Speed</button>
+    <div class="small-note">
+      Aapki last saved progress isi number se sabhi devices par same rahegi.
     </div>
-
-    <br />
-    <button class="secondary" onclick="logout()">Logout</button>
+    <button id="logoutBtn" style="background:#c0392b;">Logout</button>
   </div>
 
-  <!-- ============ GAME SCREEN ============ -->
+  <!-- GAME SCREEN -->
   <div id="gameScreen" class="screen">
-    <h1 id="modeTitle">Mode</h1>
-    <h3 id="levelTitle">Level</h3>
+    <h1 id="gameTitle">Master</h1>
+    <h2 id="gameSubTitle">Master · Level 1 / 100000</h2>
 
-    <div id="statusBar">
-      Time left: <span id="timer">0</span> s
-      &nbsp; | &nbsp;
-      Score: <span id="score">0</span>
+    <div id="topBar">
+      <span id="timeLabel">Time left: 40 s</span> |
+      <span id="scoreLabel">Score: 0</span>
     </div>
 
     <div id="grid"></div>
-    <div id="levelInfo"></div>
 
-    <button class="secondary" onclick="backToModes()">Back to Modes</button>
+    <div style="margin-top:20px;">
+      <button id="backToModesBtn" style="background:#555;">Back</button>
+      <button id="restartLevelBtn" style="background:#3498db;">Restart Level</button>
+    </div>
+    <div class="footer">
+      Match ek expression aur uske answer ko.<br />
+      Pair sahi hote hi dono boxes gayab ho jayenge, par grid ki jagah same rahegi.
+    </div>
   </div>
 
-  <!-- ============ FIREBASE + GAME SCRIPT (MODULE) ============ -->
+  <!-- FIREBASE + GAME LOGIC -->
   <script type="module">
-    // ===== Firebase imports (v12.6.0) =====
+    // ---------- Firebase imports ----------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
     import {
       getAuth,
@@ -212,8 +189,14 @@
       signInWithPhoneNumber,
       signOut
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-    // ===== Tumhara Firebase config =====
+    // ---------- Firebase config ----------
     const firebaseConfig = {
       apiKey: "AIzaSyDvmE4Qodn5awQzla0TAfcmjShgy1eaNnc",
       authDomain: "ankyukti.firebaseapp.com",
@@ -223,443 +206,400 @@
       appId: "1:888009326878:web:2038a8453c05a99d1f090f"
     };
 
+    // ---------- Initialize Firebase ----------
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // ================= GLOBAL STATE =================
+    // ---------- DOM refs ----------
+    const loginScreen = document.getElementById("loginScreen");
+    const modeScreen = document.getElementById("modeScreen");
+    const gameScreen = document.getElementById("gameScreen");
+
+    const phoneInput = document.getElementById("phoneInput");
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const otpArea = document.getElementById("otpArea");
+    const otpInput = document.getElementById("otpInput");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+
+    const startMasterBtn = document.getElementById("startMasterBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const gameTitle = document.getElementById("gameTitle");
+    const gameSubTitle = document.getElementById("gameSubTitle");
+    const timeLabel = document.getElementById("timeLabel");
+    const scoreLabel = document.getElementById("scoreLabel");
+    const gridEl = document.getElementById("grid");
+    const backToModesBtn = document.getElementById("backToModesBtn");
+    const restartLevelBtn = document.getElementById("restartLevelBtn");
+
+    // ---------- screen helper ----------
+    function showScreen(screen) {
+      loginScreen.classList.remove("active");
+      modeScreen.classList.remove("active");
+      gameScreen.classList.remove("active");
+      screen.classList.add("active");
+    }
+
+    // ---------- Auth + progress state ----------
     let recaptchaVerifier = null;
     let confirmationResultGlobal = null;
-    let currentMode = null;
-    let currentLevel = 1;
-    const MAX_LEVEL = 100000;
-    let score = 0;
-    let timerInterval = null;
-    let timeLeft = 0;
-    let selectedBoxes = [];   // {element, value}
-    let remainingPairs = 0;
+    let currentUserPhone = null;
 
-    const PROGRESS_KEY = "ank_yukti_progress_v3";
-    let progress = loadProgress();
+    const MODE_NAME = "Master";
+    const DIFFICULTY_NAME = "Speed";
 
-    const MODE_CONFIG = {
-      easy: {
-        name: "Easy",
-        gridSize: 16,
-        maxValue: 60,
-        ops: ["+", "-"],
-        baseTime: 90,
-        minTime: 25
-      },
-      difficult: {
-        name: "Difficult",
-        gridSize: 25,
-        maxValue: 120,
-        ops: ["+", "-", "*"],
-        baseTime: 60,
-        minTime: 18
-      },
-      master: {
-        name: "Master",
-        gridSize: 36,
-        maxValue: 200,
-        ops: ["+", "-", "*", "/"],
-        baseTime: 45,
-        minTime: 10
-      },
-      master_speed: {
-        name: "Master Speed",
-        gridSize: 36,
-        maxValue: 99,
-        ops: ["+", "-", "*", "/"],
-        baseTime: 30,
-        minTime: 5
-      }
-    };
+    let cloudProgress = {};  // { "Master_Speed": { bestLevel: number } }
 
-    // ========== Recaptcha init ==========
-    function initRecaptcha() {
-      recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "normal",
-          callback: () => {
-            console.log("reCAPTCHA solved");
-          }
-        }
-      );
-      recaptchaVerifier.render();
-      window.recaptchaVerifier = recaptchaVerifier;
+    function progressKey(mode, diff) {
+      return `${mode}_${diff}`;
     }
 
-    window.addEventListener("load", () => {
-      initRecaptcha();
-      updateProgressUI();
+    function getBestLevel(mode, diff) {
+      const key = progressKey(mode, diff);
+      if (cloudProgress[key] && cloudProgress[key].bestLevel) {
+        return cloudProgress[key].bestLevel;
+      }
+      return 1;
+    }
+
+    async function updateBestLevel(mode, diff, newLevel) {
+      const key = progressKey(mode, diff);
+      const old = cloudProgress[key]?.bestLevel || 1;
+      if (newLevel <= old) return;  // sirf increase hone par hi save
+
+      cloudProgress[key] = { bestLevel: newLevel };
+      if (!currentUserPhone) return;
+
+      try {
+        const userDocRef = doc(db, "users", currentUserPhone);
+        await setDoc(
+          userDocRef,
+          { progress: { ...cloudProgress } },
+          { merge: true }
+        );
+        console.log("Progress saved:", cloudProgress);
+      } catch (err) {
+        console.error("Error saving progress:", err);
+      }
+    }
+
+    async function loadUserProgress(phoneNumber) {
+      currentUserPhone = phoneNumber;
+      const userDocRef = doc(db, "users", phoneNumber);
+      try {
+        const snap = await getDoc(userDocRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          cloudProgress = data.progress || {};
+        } else {
+          cloudProgress = {};
+          await setDoc(userDocRef, { progress: {} });
+        }
+        console.log("Loaded progress:", cloudProgress);
+      } catch (err) {
+        console.error("Error loading progress:", err);
+        cloudProgress = {};
+      }
+    }
+
+    // ---------- OTP Flow ----------
+    function setupRecaptcha() {
+      if (!recaptchaVerifier) {
+        recaptchaVerifier = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          {
+            size: "normal",
+            callback: () => {
+              console.log("reCAPTCHA solved");
+            }
+          }
+        );
+      }
+    }
+
+    sendOtpBtn.addEventListener("click", async () => {
+      let raw = phoneInput.value.trim();
+      if (!raw) {
+        alert("Please enter mobile number");
+        return;
+      }
+      // simple India default
+      if (!raw.startsWith("+")) {
+        raw = "+91" + raw;
+      }
+
+      setupRecaptcha();
+
+      try {
+        sendOtpBtn.disabled = true;
+        confirmationResultGlobal = await signInWithPhoneNumber(
+          auth,
+          raw,
+          recaptchaVerifier
+        );
+        otpArea.style.display = "block";
+        alert("OTP sent!");
+      } catch (err) {
+        console.error(err);
+        alert("Error sending OTP: " + (err.message || ""));
+        sendOtpBtn.disabled = false;
+      }
     });
 
-    // ========== Helper: show screen ==========
-    function showScreen(id) {
-      document.querySelectorAll(".screen")
-        .forEach(s => s.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-    }
-
-    // ========== OTP LOGIN FUNCTIONS ==========
-    function sendOTPImpl() {
-      const phone = document.getElementById("phoneInput").value.trim();
-      if (!phone) {
-        alert("Phone number format: +91XXXXXXXXXX");
-        return;
-      }
-      if (!recaptchaVerifier) {
-        alert("reCAPTCHA not ready, reload page");
+    verifyOtpBtn.addEventListener("click", async () => {
+      const otp = otpInput.value.trim();
+      if (!otp || !confirmationResultGlobal) {
+        alert("Enter OTP first.");
         return;
       }
 
-      signInWithPhoneNumber(auth, phone, recaptchaVerifier)
-        .then((confirmationResult) => {
-          confirmationResultGlobal = confirmationResult;
-          document.getElementById("otpArea").style.display = "block";
-          alert("OTP sent (ya test code use karo yadi testing hai)");
-        })
-        .catch((e) => {
-          console.error(e);
-          alert(e.message);
-        });
-    }
-
-    function verifyOTPImpl() {
-      const code = document.getElementById("otpInput").value.trim();
-      if (!confirmationResultGlobal) {
-        alert("Please request OTP again.");
-        return;
-      }
-      confirmationResultGlobal.confirm(code)
-        .then((result) => {
-          const user = result.user;
-          document.getElementById("userInfo").textContent =
-            "Logged in as: " + (user.phoneNumber || "Player");
-
-          showScreen("modeScreen");
-          updateProgressUI();
-        })
-        .catch((e) => {
-          console.error(e);
-          alert("Wrong OTP. Please try again.");
-        });
-    }
-
-    function logoutImpl() {
-      signOut(auth).finally(() => {
-        showScreen("loginScreen");
-      });
-    }
-
-    // ========== LOCAL PROGRESS ==========
-    function loadProgress() {
       try {
-        const raw = localStorage.getItem(PROGRESS_KEY);
-        if (!raw) {
-          return { easy: 0, difficult: 0, master: 0, master_speed: 0 };
-        }
-        const p = JSON.parse(raw);
-        ["easy", "difficult", "master", "master_speed"].forEach(k => {
-          if (typeof p[k] !== "number") p[k] = 0;
-        });
-        return p;
-      } catch {
-        return { easy: 0, difficult: 0, master: 0, master_speed: 0 };
+        verifyOtpBtn.disabled = true;
+        const result = await confirmationResultGlobal.confirm(otp);
+        const user = result.user;
+        const phoneNumber = user.phoneNumber;
+
+        await loadUserProgress(phoneNumber);
+
+        otpInput.value = "";
+        showScreen(modeScreen);
+      } catch (err) {
+        console.error(err);
+        alert("OTP verification failed: " + (err.message || ""));
+        verifyOtpBtn.disabled = false;
       }
-    }
+    });
 
-    function saveProgress() {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
-      updateProgressUI();
-    }
-
-    function updateProgressUI() {
-      const div = document.getElementById("progressLines");
-      if (!div) return;
-      div.innerHTML =
-        "Easy: Level " + (progress.easy || 0) + "<br>" +
-        "Difficult: Level " + (progress.difficult || 0) + "<br>" +
-        "Master: Level " + (progress.master || 0) + "<br>" +
-        "Master Speed: Level " + (progress.master_speed || 0);
-    }
-
-    // ========== MODE / LEVEL FLOW ==========
-    function startModeImpl(modeKey) {
-      currentMode = modeKey;
-      const cfg = MODE_CONFIG[currentMode];
-
-      const best = progress[currentMode] || 0;
-      currentLevel = best + 1;
-
-      score = 0;
-      document.getElementById("score").textContent = score;
-
-      document.getElementById("modeTitle").textContent = cfg.name;
-      showScreen("gameScreen");
-
-      startLevel();
-    }
-
-    function calcTimeLimit(modeKey, level) {
-      const cfg = MODE_CONFIG[modeKey];
-      const maxL = MAX_LEVEL;
-      const ratio = Math.min(1, (level - 1) / maxL);
-      let t = cfg.baseTime - ratio * (cfg.baseTime - cfg.minTime);
-
-      if (level % 5 === 0) t -= 4;
-      if (level % 10 === 0) t -= 2;
-
-      if (modeKey === "master_speed") {
-        t -= Math.floor(level / 25);
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.error(e);
       }
+      currentUserPhone = null;
+      cloudProgress = {};
+      phoneInput.value = "";
+      otpInput.value = "";
+      otpArea.style.display = "none";
+      sendOtpBtn.disabled = false;
+      verifyOtpBtn.disabled = false;
+      showScreen(loginScreen);
+    });
 
-      if (t < cfg.minTime) t = cfg.minTime;
-      return Math.round(t);
-    }
+    // ---------- GAME LOGIC ----------
+    let currentLevel = 1;
+    let score = 0;
+    let timeLeft = 0;
+    let timerId = null;
 
-    function startLevel() {
-      const cfg = MODE_CONFIG[currentMode];
-
-      document.getElementById("levelTitle").textContent =
-        cfg.name + " · Level " + currentLevel + " / " + MAX_LEVEL;
-
-      buildGridForLevel(currentMode, currentLevel);
-      const t = calcTimeLimit(currentMode, currentLevel);
-      startTimer(t);
-      document.getElementById("levelInfo").textContent = "";
-    }
-
-    function startTimer(seconds) {
-      clearTimer();
-      timeLeft = seconds;
-      document.getElementById("timer").textContent = timeLeft;
-
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft < 0) timeLeft = 0;
-        document.getElementById("timer").textContent = timeLeft;
-
-        if (timeLeft <= 0) {
-          clearTimer();
-          document.getElementById("levelInfo").textContent =
-            "Time over! Same level restart ho raha hai.";
-          setTimeout(() => {
-            startLevel();
-          }, 1200);
-        }
-      }, 1000);
-    }
-
-    function clearTimer() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-    }
-
-    // ========== GRID / BOX GENERATION ==========
+    let gridData = [];   // { displayText, valueNumber, matched }
+    let boxes = [];      // DOM elements
+    let firstIndex = null;
+    let secondIndex = null;
+    let clickLock = false;
+    let matchedCount = 0;
 
     function randomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function makeExpression(value, ops, maxValue) {
-      for (let attempt = 0; attempt < 15; attempt++) {
-        const op = ops[randomInt(0, ops.length - 1)];
-        let a, b;
-        if (op === "+") {
-          a = randomInt(1, value - 1);
-          b = value - a;
-          if (a > 0 && b > 0 && a <= maxValue && b <= maxValue) {
-            return a + " + " + b;
-          }
-        } else if (op === "-") {
-          a = randomInt(value, value + maxValue);
-          b = a - value;
-          if (a <= maxValue && b >= 0) {
-            return a + " - " + b;
-          }
-        } else if (op === "*") {
-          if (value === 0) continue;
-          const factors = [];
-          for (let i = 1; i <= Math.sqrt(value); i++) {
-            if (value % i === 0) {
-              if (i <= maxValue && value / i <= maxValue) {
-                factors.push([i, value / i]);
-              }
-            }
-          }
-          if (factors.length) {
-            const f = factors[randomInt(0, factors.length - 1)];
-            return f[0] + " × " + f[1];
-          }
-        } else if (op === "/") {
-          if (value === 0) continue;
-          const d = randomInt(1, Math.min(12, value));
-          const n = value * d;
-          if (n <= maxValue) {
-            return n + " ÷ " + d;
-          }
+    // pairs generate: expression + answer
+    function generatePairs() {
+      const pairs = [];
+      for (let i = 0; i < 15; i++) {
+        const a = randomInt(2, 40 + currentLevel);  // level ke sath thoda tough
+        const b = randomInt(2, 12);
+        const opIndex = randomInt(1, 4); // 1:+ 2:- 3:* 4:/
+        let expr = "";
+        let value = 0;
+
+        switch (opIndex) {
+          case 1:
+            expr = `${a} + ${b}`;
+            value = a + b;
+            break;
+          case 2:
+            // minus me negative avoid
+            const big = Math.max(a, b);
+            const small = Math.min(a, b);
+            expr = `${big} - ${small}`;
+            value = big - small;
+            break;
+          case 3:
+            expr = `${a} × ${b}`;
+            value = a * b;
+            break;
+          case 4:
+            // division integer rakhenge
+            value = a;
+            const mul = a * b;
+            expr = `${mul} ÷ ${b}`;
+            break;
         }
+
+        // do cards is pair ke:
+        pairs.push({
+          displayText: expr,
+          valueNumber: value,
+          matched: false
+        });
+        pairs.push({
+          displayText: String(value),
+          valueNumber: value,
+          matched: false
+        });
       }
-      return String(value);
+
+      // shuffle
+      for (let i = pairs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+      }
+
+      return pairs;
     }
 
-    function buildGridForLevel(modeKey, level) {
-      const cfg = MODE_CONFIG[modeKey];
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-      selectedBoxes = [];
-
-      const size = cfg.gridSize;
-      const pairCount = Math.floor(size / 2);
-
-      // *** yahan columns set kar rahe hain ***
-      const cols = Math.round(Math.sqrt(size));  // 16→4, 25→5, 36→6
-      grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-
-      const tiles = [];
-
-      for (let i = 0; i < pairCount; i++) {
-        const value = randomInt(4, cfg.maxValue);
-        const useExpression = Math.random() < 0.7;
-
-        let t1Text, t2Text;
-
-        if (useExpression) {
-          t1Text = makeExpression(value, cfg.ops, cfg.maxValue);
-          t2Text = String(value);
-        } else {
-          t1Text = String(value);
-          t2Text = String(value);
-        }
-
-        tiles.push({ text: t1Text, value });
-        tiles.push({ text: t2Text, value });
-
-        if (Math.random() < 0.25 && tiles.length + 2 <= size) {
-          const extraExpr = makeExpression(value, cfg.ops, cfg.maxValue);
-          tiles.push({ text: extraExpr, value });
-          tiles.push({ text: String(value), value });
-        }
-
-        if (tiles.length >= size) break;
-      }
-
-      while (tiles.length < size) {
-        const v = randomInt(4, cfg.maxValue);
-        tiles.push({ text: String(v), value: v });
-      }
-
-      for (let i = tiles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-      }
-
-      remainingPairs = Math.floor(tiles.length / 2);
-
-      tiles.forEach((tile, index) => {
-        const div = document.createElement("div");
-        div.className = "box";
-        div.textContent = tile.text;
-        div.dataset.value = tile.value;
-        div.dataset.index = index.toString();
-
-        div.addEventListener("click", () => onBoxClick(div));
-
-        grid.appendChild(div);
+    function renderGrid() {
+      gridEl.innerHTML = "";
+      boxes = [];
+      gridData.forEach((item, index) => {
+        const btn = document.createElement("div");
+        btn.className = "box";
+        btn.textContent = item.displayText;
+        btn.addEventListener("click", () => handleBoxClick(index));
+        boxes.push(btn);
+        gridEl.appendChild(btn);
       });
     }
 
-    // ========== MATCHING LOGIC ==========
-    function onBoxClick(boxEl) {
-      if (boxEl.classList.contains("hidden")) return;
+    function resetSelections() {
+      if (firstIndex !== null && boxes[firstIndex]) {
+        boxes[firstIndex].classList.remove("selected");
+      }
+      if (secondIndex !== null && boxes[secondIndex]) {
+        boxes[secondIndex].classList.remove("selected");
+      }
+      firstIndex = null;
+      secondIndex = null;
+      clickLock = false;
+    }
 
-      if (boxEl.classList.contains("selected")) {
-        boxEl.classList.remove("selected");
-        selectedBoxes = selectedBoxes.filter(b => b.element !== boxEl);
+    function handleBoxClick(index) {
+      if (clickLock) return;
+      const item = gridData[index];
+      if (!item || item.matched) return;
+
+      if (firstIndex === null) {
+        firstIndex = index;
+        boxes[index].classList.add("selected");
         return;
       }
 
-      if (selectedBoxes.length === 2) return;
+      if (index === firstIndex) return; // same box
 
-      boxEl.classList.add("selected");
-      selectedBoxes.push({
-        element: boxEl,
-        value: parseInt(boxEl.dataset.value, 10)
-      });
+      if (secondIndex === null) {
+        secondIndex = index;
+        boxes[index].classList.add("selected");
+      }
 
-      if (selectedBoxes.length === 2) {
-        checkMatch();
+      const firstItem = gridData[firstIndex];
+      const secondItem = gridData[secondIndex];
+
+      clickLock = true;
+
+      if (firstItem.valueNumber === secondItem.valueNumber) {
+        // Match!
+        setTimeout(() => {
+          firstItem.matched = true;
+          secondItem.matched = true;
+          boxes[firstIndex].classList.add("cleared");
+          boxes[secondIndex].classList.add("cleared");
+          matchedCount += 2;
+          score += 10;
+          scoreLabel.textContent = "Score: " + score;
+          resetSelections();
+
+          if (matchedCount === gridData.length) {
+            levelCompleted();
+          }
+        }, 200);
+      } else {
+        // Galat match
+        setTimeout(() => {
+          resetSelections();
+        }, 300);
       }
     }
 
-    function checkMatch() {
-      const [b1, b2] = selectedBoxes;
-      const v1 = b1.value;
-      const v2 = b2.value;
-
-      if (v1 === v2) {
-        b1.element.classList.remove("selected");
-        b2.element.classList.remove("selected");
-        b1.element.classList.add("hidden");
-        b2.element.classList.add("hidden");
-
-        score += 10;
-        remainingPairs--;
-        document.getElementById("score").textContent = score;
-
-        if (remainingPairs <= 0) {
-          clearTimer();
-          levelCompleted();
-        }
-      } else {
-        b1.element.classList.add("wrong");
-        b2.element.classList.add("wrong");
-        setTimeout(() => {
-          b1.element.classList.remove("selected", "wrong");
-          b2.element.classList.remove("selected", "wrong");
-        }, 350);
+    function stopTimer() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
       }
+    }
 
-      selectedBoxes = [];
+    function startTimer() {
+      stopTimer();
+      timeLeft = 40; // fixed 40 seconds, chaho to level ke sath change kar sakte ho
+      timeLabel.textContent = "Time left: " + timeLeft + " s";
+
+      timerId = setInterval(() => {
+        timeLeft--;
+        if (timeLeft < 0) timeLeft = 0;
+        timeLabel.textContent = "Time left: " + timeLeft + " s";
+        if (timeLeft <= 0) {
+          stopTimer();
+          alert("Time over! Same level se dobara try karein.");
+          startLevel(currentLevel); // same level
+        }
+      }, 1000);
     }
 
     function levelCompleted() {
-      const msgEl = document.getElementById("levelInfo");
-      msgEl.textContent = "Level " + currentLevel + " complete!";
-
-      if (!progress[currentMode] || currentLevel > progress[currentMode]) {
-        progress[currentMode] = currentLevel;
-        saveProgress();
-      }
-
-      setTimeout(() => {
-        const goNext = confirm(
-          "Level " + currentLevel + " complete!\nOK = Next Level\nCancel = Repeat same level"
-        );
-        if (goNext) {
-          currentLevel++;
-        }
-        startLevel();
-      }, 800);
+      stopTimer();
+      alert("Level " + currentLevel + " complete! Next level...");
+      currentLevel++;
+      updateBestLevel(MODE_NAME, DIFFICULTY_NAME, currentLevel);
+      startLevel(currentLevel);
     }
 
-    function backToModesImpl() {
-      clearTimer();
-      showScreen("modeScreen");
+    function startLevel(levelNumber) {
+      currentLevel = levelNumber;
+      matchedCount = 0;
+      firstIndex = null;
+      secondIndex = null;
+      clickLock = false;
+
+      gameTitle.textContent = "Master";
+      gameSubTitle.textContent =
+        "Master · Level " + currentLevel + " / 100000";
+      scoreLabel.textContent = "Score: " + score;
+
+      gridData = generatePairs();
+      renderGrid();
+      startTimer();
+      window.scrollTo(0, 0);
     }
 
-    // ====== window pe expose ======
-    window.sendOTP = sendOTPImpl;
-    window.verifyOTP = verifyOTPImpl;
-    window.logout = logoutImpl;
-    window.startMode = startModeImpl;
-    window.backToModes = backToModesImpl;
+    startMasterBtn.addEventListener("click", () => {
+      // user ki cloud progress se starting level
+      const startLevelNum = getBestLevel(MODE_NAME, DIFFICULTY_NAME);
+      score = 0;
+      showScreen(gameScreen);
+      startLevel(startLevelNum);
+    });
+
+    backToModesBtn.addEventListener("click", () => {
+      stopTimer();
+      showScreen(modeScreen);
+    });
+
+    restartLevelBtn.addEventListener("click", () => {
+      stopTimer();
+      startLevel(currentLevel);
+    });
   </script>
 </body>
 </html>
