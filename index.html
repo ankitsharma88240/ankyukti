@@ -56,6 +56,7 @@
       font-size: 16px;
       background: #28a745;
       color: #fff;
+      cursor: pointer;
     }
 
     button.secondary {
@@ -64,12 +65,19 @@
 
     button:disabled {
       opacity: 0.5;
+      cursor: not-allowed;
     }
 
     #userInfo {
       font-size: 14px;
       margin-bottom: 6px;
       opacity: 0.8;
+    }
+
+    #sessionInfo {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #ccc;
     }
 
     #progressBox {
@@ -137,6 +145,22 @@
       opacity: 0.9;
     }
 
+    #leaderboardContent {
+      margin-top: 10px;
+      text-align: left;
+      max-width: 360px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #222;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    #leaderboardContent ol {
+      padding-left: 20px;
+    }
+
     @media (min-width: 768px) {
       #grid {
         max-width: 480px;
@@ -144,31 +168,88 @@
       .box {
         font-size: 22px;
       }
+      #leaderboardContent {
+        max-width: 480px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <!-- ============ LOGIN SCREEN ============ -->
-  <div id="loginScreen" class="screen active">
+  <!-- ============ WELCOME SCREEN ============ -->
+  <div id="welcomeScreen" class="screen active">
     <h1>ANK YUKTI</h1>
-    <h3>Login with Mobile Number</h3>
-
-    <input id="phoneInput" type="text" placeholder="+91XXXXXXXXXX" /><br /><br />
-    <div id="recaptcha-container"></div>
-
-    <button onclick="sendOTP()">Send OTP</button>
-
-    <div id="otpArea" style="display:none; margin-top:15px;">
-      <input id="otpInput" type="text" placeholder="Enter OTP" /><br />
-      <button onclick="verifyOTP()">Verify OTP</button>
+    <h3>Choose how to start</h3>
+    <button onclick="continueAsGuest()">Continue as Guest</button><br />
+    <button onclick="goToLogin()">Login</button><br />
+    <button onclick="goToRegister()">Create New Account</button>
+    <div style="margin-top:15px; font-size:13px; color:#ccc;">
+      Guest mode me progress sirf iss device par save hogi.<br />
+      Account banane par progress cloud me save hogi aur sab devices par same rahegi.
     </div>
+  </div>
+
+  <!-- ============ LOGIN SCREEN (ID / MOBILE + PASSWORD) ============ -->
+  <div id="loginScreen" class="screen">
+    <h1>Login</h1>
+    <h3>Login with ID or Mobile + Password</h3>
+    <input id="loginIdInput" type="text" placeholder="Mobile or ID (username)" /><br />
+    <input id="loginPasswordInput" type="password" placeholder="Password" /><br />
+    <button onclick="loginWithPassword()">Login</button><br />
+    <button class="secondary" onclick="goToForgot()">Forgot Password (OTP)</button><br />
+    <button class="secondary" onclick="backToWelcome()">Back</button>
+  </div>
+
+  <!-- ============ REGISTER SCREEN (OTP + NAME + PASSWORD) ============ -->
+  <div id="registerScreen" class="screen">
+    <h1>Create New Account</h1>
+    <h3>Step 1: Verify Mobile with OTP</h3>
+    <input id="regPhoneInput" type="text" placeholder="Mobile (e.g. 88240xxxxx)" /><br />
+    <div id="recaptcha-container" style="margin-top:10px;"></div>
+    <button id="regSendOtpBtn" onclick="sendRegisterOTP()">Send OTP</button>
+
+    <div id="regOtpArea" style="display:none; margin-top:15px;">
+      <input id="regOtpInput" type="text" placeholder="Enter OTP" /><br />
+      <button onclick="verifyRegisterOTP()">Verify OTP</button>
+    </div>
+
+    <div id="regStep2" style="display:none; margin-top:20px;">
+      <h3>Step 2: Choose ID and Password</h3>
+      <input id="regNameInput" type="text" placeholder="Unique ID / Username" /><br />
+      <input id="regPassInput" type="password" placeholder="Set Password" /><br />
+      <button onclick="createAccount()">Create Account</button>
+    </div>
+
+    <button class="secondary" onclick="backToWelcome()">Back</button>
+  </div>
+
+  <!-- ============ FORGOT PASSWORD SCREEN ============ -->
+  <div id="forgotScreen" class="screen">
+    <h1>Reset Password</h1>
+    <h3>Step 1: Verify Mobile with OTP</h3>
+    <input id="fpPhoneInput" type="text" placeholder="Registered mobile number" /><br />
+    <!-- recaptcha-container upar hi same use ho raha hai -->
+    <button id="fpSendOtpBtn" onclick="sendForgotOTP()">Send OTP</button>
+
+    <div id="fpOtpArea" style="display:none; margin-top:15px;">
+      <input id="fpOtpInput" type="text" placeholder="Enter OTP" /><br />
+      <button onclick="verifyForgotOTP()">Verify OTP</button>
+    </div>
+
+    <div id="fpStep2" style="display:none; margin-top:20px;">
+      <h3>Step 2: Set New Password</h3>
+      <input id="fpNewPassInput" type="password" placeholder="New Password" /><br />
+      <button onclick="setNewPasswordAndLogin()">Save & Login</button>
+    </div>
+
+    <button class="secondary" onclick="backToWelcome()">Back</button>
   </div>
 
   <!-- ============ MODE SELECTION ============ -->
   <div id="modeScreen" class="screen">
     <h1>ANK YUKTI</h1>
     <div id="userInfo"></div>
+    <div id="sessionInfo"></div>
     <h3>Select Mode</h3>
 
     <button onclick="startMode('easy')">Easy</button>
@@ -181,8 +262,34 @@
       <div id="progressLines"></div>
     </div>
 
+    <div style="margin-top:10px;">
+      <button onclick="goToLeaderboard()">Leaderboard</button>
+    </div>
+
+    <div style="margin-top:10px;">
+      <button id="guestUpgradeBtn" class="secondary" style="display:none;" onclick="guestUpgrade()">
+        Login / Create account to save this progress
+      </button>
+    </div>
+
     <br />
     <button class="secondary" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- ============ LEADERBOARD SCREEN ============ -->
+  <div id="leaderboardScreen" class="screen">
+    <h1>Leaderboard</h1>
+    <h3>Select Mode</h3>
+    <button onclick="loadLeaderboard('easy')">Easy</button>
+    <button onclick="loadLeaderboard('difficult')">Difficult</button>
+    <button onclick="loadLeaderboard('master')">Master</button>
+    <button onclick="loadLeaderboard('master_speed')">Master Speed</button>
+
+    <div id="leaderboardContent">
+      Mode select karo upar se.
+    </div>
+
+    <button class="secondary" onclick="backToModes()">Back to Modes</button>
   </div>
 
   <!-- ============ GAME SCREEN ============ -->
@@ -216,7 +323,12 @@
       getFirestore,
       doc,
       getDoc,
-      setDoc
+      setDoc,
+      collection,
+      query,
+      orderBy,
+      limit,
+      getDocs
     } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
     // ===== Tumhara Firebase config =====
@@ -235,7 +347,15 @@
 
     // ================= GLOBAL STATE =================
     let recaptchaVerifier = null;
-    let confirmationResultGlobal = null;
+
+    const SESSION_KEY = "ank_session_v1";
+    const GUEST_PROGRESS_KEY = "ank_guest_progress_v1";
+
+    let isGuest = false;
+    let upgradingGuest = false;  // guest → login/create
+    let currentUserPhone = null;
+    let currentUsername = null;
+
     let currentMode = null;
     let currentLevel = 1;
     const MAX_LEVEL = 100000;
@@ -244,9 +364,6 @@
     let timeLeft = 0;
     let selectedBoxes = [];   // {element, value}
     let remainingPairs = 0;
-
-    // Cloud progress
-    let currentUserPhone = null;
 
     function defaultProgress() {
       return { easy: 0, difficult: 0, master: 0, master_speed: 0 };
@@ -289,32 +406,111 @@
       }
     };
 
-    // ========== Recaptcha init ==========
-    function initRecaptcha() {
-      recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "normal",
-          callback: () => {
-            console.log("reCAPTCHA solved");
-          }
-        }
-      );
-      recaptchaVerifier.render();
-      window.recaptchaVerifier = recaptchaVerifier;
-    }
-
-    window.addEventListener("load", () => {
-      initRecaptcha();
-      updateProgressUI(); // default 0-0-0-0
-    });
-
     // ========== Helper: show screen ==========
     function showScreen(id) {
       document.querySelectorAll(".screen")
         .forEach(s => s.classList.remove("active"));
       document.getElementById(id).classList.add("active");
+    }
+
+    // ========== Recaptcha init ==========
+    function initRecaptcha() {
+      if (!recaptchaVerifier) {
+        recaptchaVerifier = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          {
+            size: "normal",
+            callback: () => {
+              console.log("reCAPTCHA solved");
+            }
+          }
+        );
+        recaptchaVerifier.render();
+      }
+    }
+
+    // ========== GUEST PROGRESS LOCAL ==========
+    function loadGuestProgress() {
+      try {
+        const raw = localStorage.getItem(GUEST_PROGRESS_KEY);
+        if (!raw) return defaultProgress();
+        const p = JSON.parse(raw);
+        return {
+          easy: p.easy || 0,
+          difficult: p.difficult || 0,
+          master: p.master || 0,
+          master_speed: p.master_speed || 0
+        };
+      } catch {
+        return defaultProgress();
+      }
+    }
+
+    function saveGuestProgress() {
+      localStorage.setItem(GUEST_PROGRESS_KEY, JSON.stringify(progress));
+    }
+
+    // ========== SESSION MANAGEMENT ==========
+    async function loadSessionOnStart() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) {
+          showScreen("welcomeScreen");
+          return;
+        }
+        const sess = JSON.parse(raw);
+        if (sess.type === "guest") {
+          isGuest = true;
+          currentUserPhone = null;
+          currentUsername = "Guest";
+          progress = loadGuestProgress();
+          updateProgressUI();
+          updateSessionInfoUI();
+          showScreen("modeScreen");
+        } else if (sess.type === "user" && sess.phone) {
+          isGuest = false;
+          currentUserPhone = sess.phone;
+          currentUsername = sess.username || sess.phone;
+          await loadProgressFromCloud(sess.phone);
+          updateSessionInfoUI();
+          showScreen("modeScreen");
+        } else {
+          showScreen("welcomeScreen");
+        }
+      } catch {
+        showScreen("welcomeScreen");
+      }
+    }
+
+    function setSessionGuest() {
+      isGuest = true;
+      currentUserPhone = null;
+      currentUsername = "Guest";
+      const session = { type: "guest" };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      updateSessionInfoUI();
+      updateProgressUI();
+    }
+
+    function setSessionUser(phone, username) {
+      isGuest = false;
+      currentUserPhone = phone;
+      currentUsername = username || phone;
+      const session = { type: "user", phone, username: currentUsername };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      updateSessionInfoUI();
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      isGuest = false;
+      currentUserPhone = null;
+      currentUsername = null;
+      upgradingGuest = false;
+      progress = defaultProgress();
+      updateProgressUI();
+      updateSessionInfoUI();
     }
 
     // ========== CLOUD PROGRESS (Firestore) ==========
@@ -332,26 +528,65 @@
             master: p.master || 0,
             master_speed: p.master_speed || 0
           };
+          currentUsername = data.username || phoneNumber;
         } else {
           progress = defaultProgress();
-          await setDoc(ref, { progress });
+          await setDoc(ref, {
+            phone: phoneNumber,
+            username: currentUsername || phoneNumber,
+            password: "",
+            progress,
+            best_easy: 0,
+            best_difficult: 0,
+            best_master: 0,
+            best_master_speed: 0
+          });
         }
       } catch (e) {
         console.error("Error loading progress:", e);
         progress = defaultProgress();
       }
       updateProgressUI();
+      updateSessionInfoUI();
     }
 
     async function saveProgressToCloud() {
       if (!currentUserPhone) return;
       try {
         const ref = doc(db, "users", currentUserPhone);
-        await setDoc(ref, { progress }, { merge: true });
+        await setDoc(
+          ref,
+          {
+            phone: currentUserPhone,
+            username: currentUsername || currentUserPhone,
+            progress,
+            best_easy: progress.easy || 0,
+            best_difficult: progress.difficult || 0,
+            best_master: progress.master || 0,
+            best_master_speed: progress.master_speed || 0
+          },
+          { merge: true }
+        );
       } catch (e) {
         console.error("Error saving progress:", e);
       }
       updateProgressUI();
+    }
+
+    async function mergeGuestProgressIntoCloud() {
+      const guest = loadGuestProgress();
+      let changed = false;
+      ["easy", "difficult", "master", "master_speed"].forEach((k) => {
+        const g = guest[k] || 0;
+        const c = progress[k] || 0;
+        if (g > c) {
+          progress[k] = g;
+          changed = true;
+        }
+      });
+      if (changed) {
+        await saveProgressToCloud();
+      }
     }
 
     function updateProgressUI() {
@@ -364,60 +599,390 @@
         "Master Speed: Level " + (progress.master_speed || 0);
     }
 
-    // ========== OTP LOGIN FUNCTIONS ==========
-    function sendOTPImpl() {
-      const phone = document.getElementById("phoneInput").value.trim();
+    function updateSessionInfoUI() {
+      const userDiv = document.getElementById("userInfo");
+      const sessDiv = document.getElementById("sessionInfo");
+      const guestBtn = document.getElementById("guestUpgradeBtn");
+
+      if (!userDiv || !sessDiv || !guestBtn) return;
+
+      if (isGuest) {
+        userDiv.textContent = "Playing as: Guest";
+        sessDiv.textContent = "Progress sirf iss device par save hogi.";
+        guestBtn.style.display = "inline-block";
+      } else if (currentUserPhone) {
+        userDiv.textContent =
+          "Logged in as: " + (currentUsername || currentUserPhone);
+        sessDiv.textContent =
+          "Progress cloud me save hai. Same number se kisi bhi device par open kar sakte ho.";
+        guestBtn.style.display = "none";
+      } else {
+        userDiv.textContent = "";
+        sessDiv.textContent = "";
+        guestBtn.style.display = "none";
+      }
+    }
+
+    // ========== BASIC HELPERS ==========
+    function normalizePhone(raw) {
+      let p = raw.trim();
+      if (!p) return "";
+      if (!p.startsWith("+")) {
+        p = "+91" + p;
+      }
+      return p;
+    }
+
+    function normalizeUsername(raw) {
+      return raw.trim().toLowerCase();
+    }
+
+    // ========== WELCOME / NAVIGATION FUNCTIONS ==========
+    function continueAsGuest() {
+      progress = loadGuestProgress();
+      setSessionGuest();
+      showScreen("modeScreen");
+    }
+
+    function goToLogin() {
+      document.getElementById("loginIdInput").value = "";
+      document.getElementById("loginPasswordInput").value = "";
+      showScreen("loginScreen");
+    }
+
+    function goToRegister() {
+      document.getElementById("regPhoneInput").value = "";
+      document.getElementById("regOtpInput").value = "";
+      document.getElementById("regNameInput").value = "";
+      document.getElementById("regPassInput").value = "";
+      document.getElementById("regOtpArea").style.display = "none";
+      document.getElementById("regStep2").style.display = "none";
+      document.getElementById("regSendOtpBtn").disabled = false;
+      showScreen("registerScreen");
+    }
+
+    function goToForgot() {
+      document.getElementById("fpPhoneInput").value = "";
+      document.getElementById("fpOtpInput").value = "";
+      document.getElementById("fpNewPassInput").value = "";
+      document.getElementById("fpOtpArea").style.display = "none";
+      document.getElementById("fpStep2").style.display = "none";
+      document.getElementById("fpSendOtpBtn").disabled = false;
+      showScreen("forgotScreen");
+    }
+
+    function backToWelcome() {
+      showScreen("welcomeScreen");
+    }
+
+    function goToLeaderboard() {
+      showScreen("leaderboardScreen");
+      document.getElementById("leaderboardContent").innerHTML =
+        "Mode select karo upar se.";
+    }
+
+    function guestUpgrade() {
+      upgradingGuest = true;
+      goToLogin();
+    }
+
+    // ========== ACCOUNT STORAGE (USERNAME / PASSWORD) ==========
+    async function findUserByPhone(phone) {
+      const ref = doc(db, "users", phone);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return null;
+      return { id: phone, data: snap.data() };
+    }
+
+    async function findUserByUsername(usernameRaw) {
+      const uname = normalizeUsername(usernameRaw);
+      const ref = doc(db, "usernames", uname);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      if (!data.phone) return null;
+      return await findUserByPhone(data.phone);
+    }
+
+    async function ensureUsernameAvailable(usernameRaw) {
+      const uname = normalizeUsername(usernameRaw);
+      const ref = doc(db, "usernames", uname);
+      const snap = await getDoc(ref);
+      return !snap.exists();
+    }
+
+    async function registerUsername(usernameRaw, phone) {
+      const uname = normalizeUsername(usernameRaw);
+      const ref = doc(db, "usernames", uname);
+      await setDoc(ref, { phone });
+    }
+
+    // ========== REGISTER FLOW (OTP + NAME + PASSWORD) ==========
+    let registerConfirmationResult = null;
+    let registerVerifiedPhone = null;
+
+    async function sendRegisterOTPImpl() {
+      const phoneRaw = document.getElementById("regPhoneInput").value;
+      const phone = normalizePhone(phoneRaw);
       if (!phone) {
-        alert("Phone number format: +91XXXXXXXXXX");
+        alert("Valid mobile number dalo.");
         return;
       }
       if (!recaptchaVerifier) {
-        alert("reCAPTCHA not ready, reload page");
-        return;
-      }
-
-      signInWithPhoneNumber(auth, phone, recaptchaVerifier)
-        .then((confirmationResult) => {
-          confirmationResultGlobal = confirmationResult;
-          document.getElementById("otpArea").style.display = "block";
-          alert("OTP sent (ya test code use karo yadi testing hai)");
-        })
-        .catch((e) => {
-          console.error(e);
-          alert(e.message);
-        });
-    }
-
-    async function verifyOTPImpl() {
-      const code = document.getElementById("otpInput").value.trim();
-      if (!confirmationResultGlobal) {
-        alert("Please request OTP again.");
+        alert("reCAPTCHA ready nahi hai. Page reload karke dekho.");
         return;
       }
       try {
-        const result = await confirmationResultGlobal.confirm(code);
-        const user = result.user;
-        const phoneNumber = user.phoneNumber || "Player";
-
-        document.getElementById("userInfo").textContent =
-          "Logged in as: " + phoneNumber;
-
-        await loadProgressFromCloud(phoneNumber);
-
-        showScreen("modeScreen");
+        document.getElementById("regSendOtpBtn").disabled = true;
+        registerConfirmationResult = await signInWithPhoneNumber(
+          auth,
+          phone,
+          recaptchaVerifier
+        );
+        document.getElementById("regOtpArea").style.display = "block";
+        alert("OTP sent to " + phone);
       } catch (e) {
         console.error(e);
-        alert("Wrong OTP. Please try again.");
+        alert("OTP send error: " + (e.message || ""));
+        document.getElementById("regSendOtpBtn").disabled = false;
       }
     }
 
-    function logoutImpl() {
-      signOut(auth).finally(() => {
-        currentUserPhone = null;
-        progress = defaultProgress();
-        updateProgressUI();
-        showScreen("loginScreen");
-      });
+    async function verifyRegisterOTPImpl() {
+      const otp = document.getElementById("regOtpInput").value.trim();
+      if (!registerConfirmationResult) {
+        alert("Pehle OTP bhejo.");
+        return;
+      }
+      if (!otp) {
+        alert("OTP dalo.");
+        return;
+      }
+      try {
+        const result = await registerConfirmationResult.confirm(otp);
+        const user = result.user;
+        registerVerifiedPhone = user.phoneNumber ||
+          normalizePhone(document.getElementById("regPhoneInput").value);
+        alert("Mobile verified: " + registerVerifiedPhone);
+        document.getElementById("regStep2").style.display = "block";
+      } catch (e) {
+        console.error(e);
+        alert("OTP wrong hai. Dubara try karo.");
+      }
+    }
+
+    async function createAccountImpl() {
+      if (!registerVerifiedPhone) {
+        alert("Pehle mobile ko OTP se verify karo.");
+        return;
+      }
+      const nameRaw = document.getElementById("regNameInput").value.trim();
+      const pass = document.getElementById("regPassInput").value.trim();
+      if (!nameRaw || !pass) {
+        alert("ID/Username aur password dono jaruri hain.");
+        return;
+      }
+      const available = await ensureUsernameAvailable(nameRaw);
+      if (!available) {
+        alert("Yeh ID/username kisi aur ke paas hai. Dusra try karo.");
+        return;
+      }
+      const phone = registerVerifiedPhone;
+
+      const userRef = doc(db, "users", phone);
+      const baseData = {
+        phone,
+        username: nameRaw,
+        password: pass, // NOTE: real app me hash karna chahiye
+        progress: defaultProgress(),
+        best_easy: 0,
+        best_difficult: 0,
+        best_master: 0,
+        best_master_speed: 0
+      };
+      await setDoc(userRef, baseData, { merge: true });
+      await registerUsername(nameRaw, phone);
+
+      progress = defaultProgress();
+      currentUserPhone = phone;
+      currentUsername = nameRaw;
+
+      if (upgradingGuest) {
+        await mergeGuestProgressIntoCloud();
+        upgradingGuest = false;
+      }
+
+      setSessionUser(phone, currentUsername);
+      await loadProgressFromCloud(phone);
+      showScreen("modeScreen");
+      alert("Account created. Welcome, " + currentUsername + "!");
+    }
+
+    // ========== LOGIN WITH PASSWORD ==========
+    async function loginWithPasswordImpl() {
+      const idRaw = document.getElementById("loginIdInput").value.trim();
+      const pass = document.getElementById("loginPasswordInput").value.trim();
+      if (!idRaw || !pass) {
+        alert("ID/phone aur password dalo.");
+        return;
+      }
+
+      let userResult = null;
+
+      if (/^\+?\d+$/.test(idRaw)) {
+        const phone = normalizePhone(idRaw);
+        userResult = await findUserByPhone(phone);
+      } else {
+        userResult = await findUserByUsername(idRaw);
+      }
+
+      if (!userResult) {
+        alert("Aisa koi account nahi mila.");
+        return;
+      }
+
+      const data = userResult.data;
+      if (!data.password || data.password !== pass) {
+        alert("Galat password.");
+        return;
+      }
+
+      currentUserPhone = data.phone;
+      currentUsername = data.username || data.phone;
+      await loadProgressFromCloud(currentUserPhone);
+
+      if (upgradingGuest) {
+        await mergeGuestProgressIntoCloud();
+        upgradingGuest = false;
+      }
+
+      setSessionUser(currentUserPhone, currentUsername);
+      showScreen("modeScreen");
+    }
+
+    // ========== FORGOT PASSWORD FLOW (OTP + NEW PASS) ==========
+    let forgotConfirmationResult = null;
+    let forgotVerifiedPhone = null;
+
+    async function sendForgotOTPImpl() {
+      const phoneRaw = document.getElementById("fpPhoneInput").value;
+      const phone = normalizePhone(phoneRaw);
+      if (!phone) {
+        alert("Valid mobile number dalo.");
+        return;
+      }
+      if (!recaptchaVerifier) {
+        alert("reCAPTCHA ready nahi hai. Page reload karke dekho.");
+        return;
+      }
+      try {
+        document.getElementById("fpSendOtpBtn").disabled = true;
+        forgotConfirmationResult = await signInWithPhoneNumber(
+          auth,
+          phone,
+          recaptchaVerifier
+        );
+        document.getElementById("fpOtpArea").style.display = "block";
+        alert("OTP sent to " + phone);
+      } catch (e) {
+        console.error(e);
+        alert("OTP send error: " + (e.message || ""));
+        document.getElementById("fpSendOtpBtn").disabled = false;
+      }
+    }
+
+    async function verifyForgotOTPImpl() {
+      const otp = document.getElementById("fpOtpInput").value.trim();
+      if (!forgotConfirmationResult) {
+        alert("Pehle OTP bhejo.");
+        return;
+      }
+      if (!otp) {
+        alert("OTP dalo.");
+        return;
+      }
+      try {
+        const result = await forgotConfirmationResult.confirm(otp);
+        const user = result.user;
+        forgotVerifiedPhone = user.phoneNumber ||
+          normalizePhone(document.getElementById("fpPhoneInput").value);
+        alert("Mobile verified: " + forgotVerifiedPhone);
+        document.getElementById("fpStep2").style.display = "block";
+      } catch (e) {
+        console.error(e);
+        alert("OTP wrong hai. Dubara try karo.");
+      }
+    }
+
+    async function setNewPasswordAndLoginImpl() {
+      if (!forgotVerifiedPhone) {
+        alert("Pehle OTP se verify karo.");
+        return;
+      }
+      const newPass = document.getElementById("fpNewPassInput").value.trim();
+      if (!newPass) {
+        alert("New password dalo.");
+        return;
+      }
+
+      const user = await findUserByPhone(forgotVerifiedPhone);
+      if (!user) {
+        alert("Is phone par koi account nahi mila. Pehle account banao.");
+        return;
+      }
+
+      const ref = doc(db, "users", forgotVerifiedPhone);
+      await setDoc(ref, { password: newPass }, { merge: true });
+
+      currentUserPhone = forgotVerifiedPhone;
+      currentUsername = user.data.username || forgotVerifiedPhone;
+      await loadProgressFromCloud(currentUserPhone);
+      setSessionUser(currentUserPhone, currentUsername);
+
+      showScreen("modeScreen");
+      alert("Password reset ho gaya aur aap login ho gaye.");
+    }
+
+    // ========== LEADERBOARD ==========
+    async function loadLeaderboardImpl(modeKey) {
+      const lbDiv = document.getElementById("leaderboardContent");
+      lbDiv.innerHTML = "Loading...";
+
+      const fieldMap = {
+        easy: "best_easy",
+        difficult: "best_difficult",
+        master: "best_master",
+        master_speed: "best_master_speed"
+      };
+      const field = fieldMap[modeKey] || "best_easy";
+
+      try {
+        const q = query(
+          collection(db, "users"),
+          orderBy(field, "desc"),
+          limit(10)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          lbDiv.innerHTML = "Abhi kisi ne bhi is mode me level clear nahi kiya.";
+          return;
+        }
+        let html = "<b>Top players – " + MODE_CONFIG[modeKey].name + "</b><br /><ol>";
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
+          const uname = data.username || data.phone || "Player";
+          const lvl = (data.progress && data.progress[modeKey]) ||
+                      data[field] || 0;
+          if (lvl > 0) {
+            html += "<li>" + uname + " – Level " + lvl + "</li>";
+          }
+        });
+        html += "</ol>";
+        lbDiv.innerHTML = html;
+      } catch (e) {
+        console.error(e);
+        lbDiv.innerHTML = "Error loading leaderboard.";
+      }
     }
 
     // ========== MODE / LEVEL FLOW ==========
@@ -667,8 +1232,11 @@
 
       if (!progress[currentMode] || currentLevel > progress[currentMode]) {
         progress[currentMode] = currentLevel;
-        // cloud save (fire-and-forget)
-        saveProgressToCloud();
+        if (isGuest) {
+          saveGuestProgress();
+        } else {
+          saveProgressToCloud();
+        }
       }
 
       setTimeout(() => {
@@ -687,12 +1255,44 @@
       showScreen("modeScreen");
     }
 
+    // ========== LOGOUT ==========
+    function logoutImpl() {
+      signOut(auth).catch(() => {});
+      clearSession();
+      showScreen("welcomeScreen");
+    }
+
     // ====== window pe expose ======
-    window.sendOTP = sendOTPImpl;
-    window.verifyOTP = verifyOTPImpl;
-    window.logout = logoutImpl;
+    window.continueAsGuest = continueAsGuest;
+    window.goToLogin = goToLogin;
+    window.goToRegister = goToRegister;
+    window.goToForgot = goToForgot;
+    window.backToWelcome = backToWelcome;
+
+    window.sendRegisterOTP = sendRegisterOTPImpl;
+    window.verifyRegisterOTP = verifyRegisterOTPImpl;
+    window.createAccount = createAccountImpl;
+
+    window.loginWithPassword = loginWithPasswordImpl;
+
+    window.sendForgotOTP = sendForgotOTPImpl;
+    window.verifyForgotOTP = verifyForgotOTPImpl;
+    window.setNewPasswordAndLogin = setNewPasswordAndLoginImpl;
+
     window.startMode = startModeImpl;
     window.backToModes = backToModesImpl;
+    window.logout = logoutImpl;
+
+    window.goToLeaderboard = goToLeaderboard;
+    window.loadLeaderboard = loadLeaderboardImpl;
+
+    window.guestUpgrade = guestUpgrade;
+
+    // ====== INIT ON LOAD ======
+    window.addEventListener("load", async () => {
+      initRecaptcha();
+      await loadSessionOnStart();
+    });
   </script>
 </body>
 </html>
